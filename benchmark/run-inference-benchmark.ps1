@@ -45,6 +45,15 @@ function Invoke-GitSafe([string[]]$GitArgs) {
     } finally { $ErrorActionPreference = $previousPreference }
     [pscustomobject]@{ ExitCode = $code; Output = $lines }
 }
+function Invoke-NativeCapture([string]$Executable, [string[]]$Arguments) {
+    $previousPreference = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        $lines = @(& $Executable @Arguments 2>&1 | ForEach-Object { [string]$_ })
+        $code = $LASTEXITCODE
+    } finally { $ErrorActionPreference = $previousPreference }
+    [pscustomobject]@{ ExitCode = $code; Output = $lines }
+}
 $failed = $false
 $stage = 'preparing benchmark'
 try {
@@ -83,8 +92,10 @@ try {
 
     $stage = 'enumerate Vulkan devices'
     Write-RunLog "`nDispositivos reportados pelo llama.cpp:"
-    $devices = @(& $cli.FullName '--list-devices' 2>&1 | ForEach-Object { [string]$_ })
+    $deviceResult = Invoke-NativeCapture -Executable $cli.FullName -Arguments @('--list-devices')
+    $devices = @($deviceResult.Output)
     $devices | ForEach-Object { Write-RunLog $_ }
+    if ($deviceResult.ExitCode -ne 0) { Write-RunLog "Aviso: enumeração de dispositivos terminou com código $($deviceResult.ExitCode)." }
     $report.deviceEnumeration = $devices
     $vulkanGpuFound = (($devices -join "`n") -match '(?i)Vulkan') -and (($devices -join "`n") -match '(?i)AMD|Radeon|RX 580')
 
@@ -93,8 +104,9 @@ try {
         Write-RunLog "`n=== $Name (GPU layers: $GpuLayers) ==="
         $sw = [System.Diagnostics.Stopwatch]::StartNew()
         $benchArgs = @('-m', $modelPath, '-p', '256', '-n', '64', '-t', '6', '-r', '2', '-ngl', "$GpuLayers")
-        $output = @(& $bench.FullName @benchArgs 2>&1 | ForEach-Object { $line = [string]$_; Write-RunLog $line; Protect-String $line })
-        $exit = $LASTEXITCODE
+        $benchResult = Invoke-NativeCapture -Executable $bench.FullName -Arguments $benchArgs
+        $output = @($benchResult.Output | ForEach-Object { Write-RunLog $_; Protect-String $_ })
+        $exit = $benchResult.ExitCode
         $sw.Stop()
         $report.tests += [ordered]@{ name = $Name; gpuLayers = $GpuLayers; exitCode = $exit; wallTimeSeconds = [math]::Round($sw.Elapsed.TotalSeconds, 2); rawOutput = $output }
         if ($exit -ne 0) { Write-RunLog "Teste '$Name' terminou com código $exit; detalhes estão no log." }

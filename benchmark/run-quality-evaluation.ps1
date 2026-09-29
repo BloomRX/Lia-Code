@@ -29,6 +29,7 @@ $runtimeDir = Join-Path $cache 'llama-b11249-vulkan'
 $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 $logPath = Join-Path $outDir "lia-quality-$stamp.log"
 $jsonPath = Join-Path $outDir "lia-quality-$stamp.json"
+$reasoningMode = if ($ModelVariant -eq '8B') { 'disabled via chat_template_kwargs' } else { 'model default' }
 $serverStdout = Join-Path $cache "quality-server-$stamp.stdout.log"
 $serverStderr = Join-Path $cache "quality-server-$stamp.stderr.log"
 $report = [ordered]@{
@@ -36,7 +37,7 @@ $report = [ordered]@{
     createdAt = (Get-Date).ToString('o')
     model = [ordered]@{ variant = $ModelVariant; name = $modelName; repository = $modelRepo; revision = $modelRevision; quantization = 'Q4_K_M'; license = 'Apache-2.0 (upstream Qwen3)' }
     runtime = [ordered]@{ name = 'llama.cpp Vulkan'; release = 'b11249' }
-    generation = [ordered]@{ gpuLayers = 99; contextTokens = 4096; temperature = 0.2; seed = 42; maxTokens = 300 }
+    generation = [ordered]@{ gpuLayers = 99; contextTokens = 4096; temperature = 0.2; seed = 42; maxTokens = 300; reasoningMode = $reasoningMode }
     cases = @()
     scoringGuide = @(
         'Avalie cada critério de 1 a 5; esta rodada coleta evidência, não produz um placar automático subjetivo.',
@@ -132,8 +133,8 @@ try {
         [ordered]@{
             id = 'serio-priorizacao'
             mode = 'Sério'
-            system = 'Você é Lia no Modo Sério. Responda em português brasileiro, de forma profissional, objetiva e sem piadas ou flerte. Não invente fatos. Estruture a resposta em prioridades e próximos passos.'
-            user = 'Tenho 90 minutos para revisar um pull request importante, responder um e-mail urgente e começar um relatório que vence hoje. Monte uma ordem de trabalho realista, com blocos de tempo e uma frase explicando a prioridade.'
+            system = 'Você é Lia no Modo Sério. Responda em português brasileiro, de forma profissional, objetiva e sem piadas ou flerte. Não invente fatos. Responda em até 90 palavras.'
+            user = 'Tenho 90 minutos. Faça um plano em exatamente quatro linhas numeradas que some 90 minutos: responder e-mail urgente, revisar pull request importante, começar relatório que vence hoje e reservar uma pequena pausa/transição. Para cada linha, dê o tempo e uma justificativa curta.'
             rubric = @('Prioriza o item urgente e/ou o prazo mais próximo de forma sensata.', 'Plano cabe em 90 minutos e reserva algum tempo para transições.', 'Tom sério, claro e sem brincadeira.')
         },
         [ordered]@{
@@ -165,14 +166,20 @@ try {
             seed = 42
             max_tokens = 300
             stream = $false
-        } | ConvertTo-Json -Depth 8 -Compress
-        $body = [System.Text.Encoding]::UTF8.GetBytes($payload)
+        }
+        if ($ModelVariant -eq '8B') { $payload['chat_template_kwargs'] = @{ enable_thinking = $false } }
+        $payloadJson = $payload | ConvertTo-Json -Depth 8 -Compress
+        $body = [System.Text.Encoding]::UTF8.GetBytes($payloadJson)
         $timer = [System.Diagnostics.Stopwatch]::StartNew()
         $response = Invoke-RestMethod -Uri "http://127.0.0.1:$port/v1/chat/completions" -Method Post -Body $body -ContentType 'application/json; charset=utf-8' -TimeoutSec 180
         $timer.Stop()
         $text = [string]$response.choices[0].message.content
+        $finishReason = [string]$response.choices[0].finish_reason
+        $thinkingContentPresent = $false
+        try { $thinkingContentPresent = -not [string]::IsNullOrWhiteSpace([string]$response.choices[0].message.reasoning_content) } catch {}
         $tokens = $null
         try { $tokens = [int]$response.usage.completion_tokens } catch {}
+        $tokenCapReached = ($null -ne $tokens) -and ($tokens -ge 300)
         $autoCheck = [ordered]@{ jsonValid = $null; exactExpectedKeys = $null; allValuesStrings = $null }
         if ($case.id -eq 'json-instructions') {
             try {
@@ -194,12 +201,16 @@ try {
             response = Protect-String $text
             elapsedSeconds = [math]::Round($timer.Elapsed.TotalSeconds, 2)
             completionTokens = $tokens
+            finishReason = $finishReason
+            tokenCapReached = $tokenCapReached
+            emptyResponse = [string]::IsNullOrWhiteSpace($text)
+            reasoningContentPresent = $thinkingContentPresent
             automaticChecks = $autoCheck
             rubric = $case.rubric
             humanScore = $null
         }
         $report.cases += $item
-        Write-RunLog ("Tempo: {0:N2}s | tokens reportados: {1}" -f $item.elapsedSeconds, $tokens)
+        Write-RunLog ("Tempo: {0:N2}s | tokens reportados: {1} | finish: {2} | limite atingido: {3} | resposta vazia: {4} | canal de raciocínio presente: {5}" -f $item.elapsedSeconds, $tokens, $finishReason, $tokenCapReached, $item.emptyResponse, $thinkingContentPresent)
         Write-RunLog 'Resposta:'
         Write-RunLog $text
         if ($case.id -eq 'json-instructions') { Write-RunLog "JSON parseável: $($autoCheck.jsonValid); chaves exatas: $($autoCheck.exactExpectedKeys); valores string: $($autoCheck.allValuesStrings)" }

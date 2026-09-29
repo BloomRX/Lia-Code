@@ -1,11 +1,29 @@
-﻿$ErrorActionPreference = 'Stop'
+﻿param(
+    [ValidateSet('4B', '8B')]
+    [string]$ModelVariant = '4B'
+)
+$ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
 $OutputEncoding = [Console]::OutputEncoding
 $root = Split-Path -Parent $PSScriptRoot
 $outDir = Join-Path $root 'benchmark-results'
 $cache = Join-Path $env:LOCALAPPDATA 'Lia-Code\benchmark-cache'
-$modelName = 'Qwen_Qwen3-4B-Instruct-2507-Q4_K_M.gguf'
+if ($ModelVariant -eq '8B') {
+    $modelName = 'Qwen_Qwen3-8B-Q4_K_M.gguf'
+    $modelRepo = 'bartowski/Qwen_Qwen3-8B-GGUF'
+    $modelRevision = '9338057cea2b55fad29c435822e9f1a45482ef04'
+    $minimumModelBytes = [long](4.5 * 1GB)
+    $minimumFreeBytes = 7GB
+    $modelUrl = 'https://huggingface.co/bartowski/Qwen_Qwen3-8B-GGUF/resolve/{0}/{1}?download=true' -f $modelRevision, $modelName
+} else {
+    $modelName = 'Qwen_Qwen3-4B-Instruct-2507-Q4_K_M.gguf'
+    $modelRepo = 'bartowski/Qwen_Qwen3-4B-Instruct-2507-GGUF'
+    $modelRevision = '5ba9dff45461e5bab86959be7d585609fe9e6bc3'
+    $minimumModelBytes = 2.2GB
+    $minimumFreeBytes = 5GB
+    $modelUrl = 'https://huggingface.co/bartowski/Qwen_Qwen3-4B-Instruct-2507-GGUF/resolve/{0}/{1}?download=true' -f $modelRevision, $modelName
+}
 $modelPath = Join-Path (Join-Path $cache 'models') $modelName
 $runtimeDir = Join-Path $cache 'llama-b11249-vulkan'
 $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
@@ -16,9 +34,9 @@ $serverStderr = Join-Path $cache "quality-server-$stamp.stderr.log"
 $report = [ordered]@{
     schemaVersion = 1
     createdAt = (Get-Date).ToString('o')
-    model = [ordered]@{ name = $modelName; quantization = 'Q4_K_M' }
+    model = [ordered]@{ variant = $ModelVariant; name = $modelName; repository = $modelRepo; revision = $modelRevision; quantization = 'Q4_K_M'; license = 'Apache-2.0 (upstream Qwen3)' }
     runtime = [ordered]@{ name = 'llama.cpp Vulkan'; release = 'b11249' }
-    generation = [ordered]@{ gpuLayers = 99; contextTokens = 4096; temperature = 0.2; seed = 42; maxTokens = 180 }
+    generation = [ordered]@{ gpuLayers = 99; contextTokens = 4096; temperature = 0.2; seed = 42; maxTokens = 300 }
     cases = @()
     scoringGuide = @(
         'Avalie cada critério de 1 a 5; esta rodada coleta evidência, não produz um placar automático subjetivo.',
@@ -62,8 +80,23 @@ $serverProc = $null
 $failed = $false
 $stage = 'preflight'
 try {
-    Write-RunLog 'Lia-Code - avaliação qualitativa local'
-    if (-not (Test-Path $modelPath)) { throw 'Modelo Q4_K_M não encontrado no cache. Rode Update-Lia.bat speed uma vez para preparar modelo/runtime.' }
+    Write-RunLog "Lia-Code - avaliação qualitativa local ($ModelVariant Q4_K_M)"
+    if ((Test-Path $modelPath) -and ((Get-Item -LiteralPath $modelPath).Length -lt $minimumModelBytes)) {
+        Remove-Item -LiteralPath $modelPath -Force
+        Write-RunLog 'Removido download parcial do modelo da tentativa anterior.'
+    }
+    if (-not (Test-Path $modelPath)) {
+        if ($ModelVariant -eq '4B') { throw 'Modelo Q4_K_M de 4B não encontrado no cache. Rode Update-Lia.bat speed primeiro.' }
+        $drive = [System.IO.DriveInfo]::new([System.IO.Path]::GetPathRoot($cache))
+        if ($drive.AvailableFreeSpace -lt $minimumFreeBytes) { throw 'São necessários pelo menos 7 GiB livres para baixar o modelo 8B.' }
+        $answer = Read-Host 'O modelo 8B ocupa cerca de 5,03 GB. Digite S para baixar; outra resposta cancela'
+        if ($answer -notmatch '^(s|sim|y|yes)$') { throw 'Download do candidato 8B cancelado pelo usuário.' }
+        $stage = 'download candidate 8B from Hugging Face'
+        Write-RunLog "Baixando $modelName de $modelRepo (revisão fixada)..."
+        New-Item -ItemType Directory -Force -Path (Split-Path -Parent $modelPath) | Out-Null
+        Invoke-WebRequest -Uri $modelUrl -OutFile $modelPath -UseBasicParsing
+    }
+    if ((Get-Item -LiteralPath $modelPath).Length -lt $minimumModelBytes) { throw "Arquivo do modelo menor que o limite esperado ($minimumModelBytes bytes); possível download incompleto." }
     $serverExe = Get-ChildItem -LiteralPath $runtimeDir -Filter 'llama-server.exe' -Recurse | Select-Object -First 1
     if (-not $serverExe) { throw 'llama-server.exe não encontrado no runtime em cache.' }
 
@@ -86,16 +119,6 @@ try {
         } catch { Start-Sleep -Seconds 1 }
     }
     if (-not $ready) { throw 'llama-server não ficou pronto em 240 segundos.' }
-    $startupEvidence = @()
-    foreach ($diagnostic in @($serverStdout, $serverStderr)) {
-        try {
-            if (Test-Path $diagnostic) {
-                $startupEvidence += @(Get-Content -LiteralPath $diagnostic -ErrorAction SilentlyContinue | Where-Object { $_ -match '(?i)Vulkan|offload|device|GPU|layer' } | ForEach-Object { Protect-String ([string]$_) })
-            }
-        } catch {}
-    }
-    $report.serverStartupEvidence = $startupEvidence
-    $startupEvidence | ForEach-Object { Write-RunLog $_ }
     Write-RunLog 'Servidor pronto; enviando quatro casos fixos de avaliação.'
 
     $cases = @(
@@ -140,7 +163,7 @@ try {
             )
             temperature = 0.2
             seed = 42
-            max_tokens = 180
+            max_tokens = 300
             stream = $false
         } | ConvertTo-Json -Depth 8 -Compress
         $body = [System.Text.Encoding]::UTF8.GetBytes($payload)
@@ -194,7 +217,22 @@ try {
         }
     }
 } finally {
-    if ($serverProc -and -not $serverProc.HasExited) { Stop-Process -Id $serverProc.Id -Force -ErrorAction SilentlyContinue }
+    if ($serverProc) {
+        try {
+            $serverProc.Refresh()
+            if (-not $serverProc.HasExited) { Stop-Process -Id $serverProc.Id -Force -ErrorAction SilentlyContinue; [void]$serverProc.WaitForExit(5000) }
+        } catch {}
+    }
+    $startupEvidence = @()
+    foreach ($diagnostic in @($serverStdout, $serverStderr)) {
+        try {
+            if (Test-Path $diagnostic) {
+                $startupEvidence += @(Get-Content -LiteralPath $diagnostic -ErrorAction SilentlyContinue | Where-Object { $_ -match '(?i)Vulkan|offload|device|GPU|layer' } | ForEach-Object { Protect-String ([string]$_) })
+            }
+        } catch {}
+    }
+    $report.serverStartupEvidence = $startupEvidence
+    $startupEvidence | ForEach-Object { Write-RunLog $_ }
     try { $report | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $jsonPath -Encoding UTF8 } catch { $failed = $true; Write-RunLog "Falha ao gravar JSON: $($_.Exception.Message)" }
 }
 

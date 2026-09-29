@@ -45,16 +45,20 @@ if not "%PULL_RESULT%"=="0" (
 set "TEST_MODE=%~1"
 if not defined TEST_MODE set "TEST_MODE=quality"
 if /i "%TEST_MODE%"=="quality" set "PS_SCRIPT=%~dp0benchmark\run-quality-evaluation.ps1"
+if /i "%TEST_MODE%"=="quality-8b" (
+  set "PS_SCRIPT=%~dp0benchmark\run-quality-evaluation.ps1"
+  set "PS_ARGS=-ModelVariant 8B"
+)
 if /i "%TEST_MODE%"=="speed" set "PS_SCRIPT=%~dp0benchmark\run-inference-benchmark.ps1"
 if not defined PS_SCRIPT (
-  echo Uso: Update-Lia.bat [quality^|speed]
-  echo Sem argumento, executa a avaliacao de qualidade.
+  echo Uso: Update-Lia.bat [quality^|quality-8b^|speed]
+  echo Sem argumento, roda a avaliacao de qualidade do controle Qwen3-4B.
   pause
   exit /b 2
 )
 
 echo Iniciando teste %TEST_MODE%...
-powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%PS_SCRIPT%"
+powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%PS_SCRIPT%" %PS_ARGS%
 set "RESULT=%ERRORLEVEL%"
 echo.
 if not "%RESULT%"=="0" echo Teste terminou com erro. Consulte benchmark-results.

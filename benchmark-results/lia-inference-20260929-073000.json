@@ -1,0 +1,25 @@
+﻿{
+    "schemaVersion":  1,
+    "createdAt":  "2026-09-29T07:30:00.4971051-03:00",
+    "model":  {
+                  "name":  "Qwen3-4B-Instruct-2507-Q4_K_M.gguf",
+                  "repository":  "bartowski/Qwen_Qwen3-4B-Instruct-2507-GGUF",
+                  "quantization":  "Q4_K_M",
+                  "sourceLicense":  "Apache-2.0 (upstream Qwen model; verify repository notices)"
+              },
+    "runtime":  {
+                    "name":  "llama.cpp Vulkan",
+                    "release":  "b11249"
+                },
+    "deviceEnumeration":  [
+
+                          ],
+    "tests":  [
+
+              ],
+    "notes":  [
+                  "Initial local inference benchmark; measures throughput only, not answer quality.",
+                  "The model and runtime are downloaded to the user LocalAppData cache, not into the Git repository.",
+                  "ERROR: O servidor remoto retornou um erro: (404) Não Localizado."
+              ]
+}

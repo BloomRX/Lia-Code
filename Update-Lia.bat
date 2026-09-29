@@ -43,7 +43,8 @@ if not "%PULL_RESULT%"=="0" (
 )
 
 set "TEST_MODE=%~1"
-if not defined TEST_MODE set "TEST_MODE=quality-both"
+if not defined TEST_MODE set "TEST_MODE=full"
+if /i "%TEST_MODE%"=="full" set "PS_SCRIPT=%~dp0benchmark\run-quality-evaluation.ps1"
 if /i "%TEST_MODE%"=="quality-both" set "PS_SCRIPT=%~dp0benchmark\run-quality-evaluation.ps1"
 if /i "%TEST_MODE%"=="quality" set "PS_SCRIPT=%~dp0benchmark\run-quality-evaluation.ps1"
 if /i "%TEST_MODE%"=="personality" (
@@ -56,13 +57,14 @@ if /i "%TEST_MODE%"=="quality-8b" (
 )
 if /i "%TEST_MODE%"=="speed" set "PS_SCRIPT=%~dp0benchmark\run-inference-benchmark.ps1"
 if not defined PS_SCRIPT (
-echo Uso: Update-Lia.bat [quality-both^|quality^|quality-8b^|personality^|speed]
-echo Sem argumento, roda controle 4B e candidato 8B em sequencia.
-echo personality compara os prompts de personalidade no Qwen3-4B.
+echo Uso: Update-Lia.bat [full^|quality-both^|quality^|quality-8b^|personality^|speed]
+echo Sem argumento, roda comparacao 4B/8B e etapa de personalidade no 4B.
+echo quality-both compara os modelos; personality compara os prompts no 4B.
   pause
   exit /b 2
 )
 
+if /i "%TEST_MODE%"=="full" goto run_full
 if /i "%TEST_MODE%"=="quality-both" goto run_both
 
 echo Iniciando teste %TEST_MODE%...
@@ -70,9 +72,17 @@ powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%PS_SCRIPT%" %P
 set "RESULT=%ERRORLEVEL%"
 goto finish
 
+:run_full
+set "RUN_PERSONALITY=1"
+echo Rodada completa: comparacao 4B/8B seguida da etapa de personalidade no 4B.
+goto run_quality_pair
+
 :run_both
-echo Esta rodada executara os dois modelos em sequencia: controle Qwen3-4B e candidato Qwen3-8B.
-echo Os relatorios de cada modelo serao salvos e enviados automaticamente.
+set "RUN_PERSONALITY=0"
+echo Comparacao dos modelos: controle Qwen3-4B e candidato Qwen3-8B.
+
+:run_quality_pair
+echo Os relatorios de cada etapa serao salvos e enviados automaticamente.
 tasklist /fi "imagename eq chrome.exe" /nh 2>nul | find /i "chrome.exe" >nul
 if not errorlevel 1 (
   echo.
@@ -93,10 +103,18 @@ echo.
 echo ===== MODELO CANDIDATO: QWEN3-8B =====
 powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%PS_SCRIPT%" -ModelVariant 8B
 set "RESULT8=%ERRORLEVEL%"
+if "!RUN_PERSONALITY!"=="1" (
+  echo.
+  echo ===== PERSONALIDADE: BASELINE VS PROMPT V1 NO QWEN3-4B =====
+  powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%PS_SCRIPT%" -Suite personality
+  set "RESULT_PERSONALITY=!ERRORLEVEL!"
+)
 set "RESULT=1"
 if "!RESULT4!"=="0" if "!RESULT8!"=="0" set "RESULT=0"
+if "!RUN_PERSONALITY!"=="1" if not "!RESULT_PERSONALITY!"=="0" set "RESULT=1"
 if not "!RESULT4!"=="0" echo O teste 4B terminou com erro. Confira o relatorio local.
 if not "!RESULT8!"=="0" echo O teste 8B terminou com erro. Confira o relatorio local.
+if "!RUN_PERSONALITY!"=="1" if not "!RESULT_PERSONALITY!"=="0" echo A etapa de personalidade terminou com erro. Confira o relatorio local.
 
 goto finish
 

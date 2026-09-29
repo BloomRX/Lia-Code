@@ -1,5 +1,5 @@
 @echo off
-setlocal
+setlocal EnableExtensions EnableDelayedExpansion
 chcp 65001 >nul
 cd /d "%~dp0.."
 title Lia-Code - Atualizar e testar
@@ -18,9 +18,9 @@ rem Back them up outside the repo, restore report files only, and keep source ch
 git diff --quiet -- benchmark-results
 if errorlevel 1 (
   set "BACKUP_DIR=%LOCALAPPDATA%\Lia-Code\report-backups\pull-%RANDOM%-%RANDOM%"
-  echo Relatorios locais alterados detectados. Fazendo backup em "%BACKUP_DIR%"...
-  if not exist "%BACKUP_DIR%" mkdir "%BACKUP_DIR%"
-  xcopy "benchmark-results\*" "%BACKUP_DIR%\" /e /i /h /y >nul
+  echo Relatorios locais alterados detectados. Fazendo backup em "!BACKUP_DIR!"...
+  if not exist "!BACKUP_DIR!" mkdir "!BACKUP_DIR!"
+  xcopy "benchmark-results\*" "!BACKUP_DIR!\" /e /i /h /y >nul
   if errorlevel 1 (
     echo ERRO: nao foi possivel fazer backup dos relatorios. Nada sera descartado.
     pause

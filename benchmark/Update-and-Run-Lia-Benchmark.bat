@@ -13,8 +13,8 @@ if not "%CURRENT_BRANCH%"=="%EXPECTED_BRANCH%" (
   exit /b 1
 )
 
-rem Generated benchmark reports can be modified locally after their auto-commit (the script appends status text).
-rem Back them up outside the repo and restore only report files before pulling; leave all source changes untouched.
+rem Generated benchmark reports can be modified locally after auto-commit.
+rem Back them up outside the repo, restore report files only, and keep source changes untouched.
 git diff --quiet -- benchmark-results
 if errorlevel 1 (
   set "BACKUP_DIR=%LOCALAPPDATA%\Lia-Code\report-backups\pull-%RANDOM%-%RANDOM%"

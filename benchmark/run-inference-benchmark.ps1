@@ -12,13 +12,14 @@ $runtimeTag = 'b11249'
 $runtimeZip = Join-Path $cache "llama-$runtimeTag-vulkan.zip"
 $runtimeDir = Join-Path $cache "llama-$runtimeTag-vulkan"
 $modelName = 'Qwen_Qwen3-4B-Instruct-2507-Q4_K_M.gguf'
+$modelRevision = '5ba9dff45461e5bab86959be7d585609fe9e6bc3'
 $modelPath = Join-Path (Join-Path $cache 'models') $modelName
 $releaseUrl = "https://github.com/ggml-org/llama.cpp/releases/download/$runtimeTag/llama-$runtimeTag-bin-win-vulkan-x64.zip"
-$modelUrl = "https://huggingface.co/bartowski/Qwen_Qwen3-4B-Instruct-2507-GGUF/resolve/main/$modelName?download=true"
+$modelUrl = 'https://huggingface.co/bartowski/Qwen_Qwen3-4B-Instruct-2507-GGUF/resolve/{0}/{1}?download=true' -f $modelRevision, $modelName
 $report = [ordered]@{
     schemaVersion = 1
     createdAt = (Get-Date).ToString('o')
-    model = [ordered]@{ name = $modelName; repository = 'bartowski/Qwen_Qwen3-4B-Instruct-2507-GGUF'; quantization = 'Q4_K_M'; sourceLicense = 'Apache-2.0 (upstream Qwen model; verify repository notices)' }
+    model = [ordered]@{ name = $modelName; repository = 'bartowski/Qwen_Qwen3-4B-Instruct-2507-GGUF'; revision = $modelRevision; quantization = 'Q4_K_M'; sourceLicense = 'Apache-2.0 (upstream Qwen model; verify repository notices)' }
     runtime = [ordered]@{ name = 'llama.cpp Vulkan'; release = $runtimeTag }
     deviceEnumeration = @()
     tests = @()
@@ -45,6 +46,7 @@ function Invoke-GitSafe([string[]]$GitArgs) {
     [pscustomobject]@{ ExitCode = $code; Output = $lines }
 }
 $failed = $false
+$stage = 'preparing benchmark'
 try {
     Write-RunLog 'Lia-Code - benchmark local de inferência'
     Write-RunLog 'Vai baixar um runtime Vulkan e um modelo GGUF (~2,5 GB para o modelo).'
@@ -57,6 +59,7 @@ try {
     if ($drive.AvailableFreeSpace -lt 5GB) { throw 'Menos de 5 GB livres no drive do cache. Libere espaço e tente novamente.' }
 
     if (-not (Test-Path $runtimeDir)) {
+        $stage = 'download llama.cpp runtime'
         Write-RunLog "Baixando llama.cpp $runtimeTag (Vulkan)..."
         Invoke-WebRequest -Uri $releaseUrl -OutFile $runtimeZip -UseBasicParsing
         Expand-Archive -LiteralPath $runtimeZip -DestinationPath $runtimeDir -Force
@@ -72,6 +75,7 @@ try {
         Write-RunLog 'Removido arquivo parcial de modelo da tentativa anterior.'
     }
     if (-not (Test-Path $modelPath)) {
+        $stage = 'download model from Hugging Face'
         Write-RunLog 'Baixando modelo Qwen3-4B-Instruct-2507 Q4_K_M (~2,5 GB)...'
         Invoke-WebRequest -Uri $modelUrl -OutFile $modelPath -UseBasicParsing
     } else { Write-RunLog 'Modelo em cache reutilizado.' }
@@ -104,8 +108,10 @@ try {
     $report.notes += 'Cada caso usa 256 tokens de prompt, até 64 tokens de geração, 6 threads e 2 repetições, via llama-bench.'
 } catch {
     $failed = $true
-    $report.notes += "ERROR: $($_.Exception.Message)"
-    Write-RunLog "ERRO: $($_.Exception.Message)"
+    $detail = $_.Exception.Message
+    try { if ($_.Exception.Response.StatusCode) { $detail += " (HTTP $([int]$_.Exception.Response.StatusCode))" } } catch {}
+    $report.notes += "ERROR during ${stage}: $detail"
+    Write-RunLog "ERRO durante ${stage}: $detail"
 } finally {
     try { $report | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $jsonPath -Encoding UTF8 } catch { $failed = $true; Write-RunLog "Falha ao gravar JSON: $($_.Exception.Message)" }
 }

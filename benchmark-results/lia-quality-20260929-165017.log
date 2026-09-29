@@ -1,0 +1,51 @@
+Lia-Code quality evaluation (4B) | 20260929-165017
+Lia-Code - avaliação quality local (4B Q4_K_M)
+Iniciando servidor local apenas em 127.0.0.1:60882 com offload Vulkan.
+Servidor pronto; enviando 4 casos fixos da avaliação quality.
+
+=== Caso: casual-tsundere | modo: Casual ===
+Tempo: 4,44s | tokens reportados: 76 | finish: stop | limite atingido: False | resposta vazia: False | canal de raciocínio presente: False
+Resposta:
+Uau, isso é show de bola! A GPU realmente tá com o poder de um super-herói em ação, né? 😏 Mas não se esqueça, a CPU ainda tá lá, esperando o seu turno pra se mostrar... (mesmo que eu não diga isso pra você, é só um segredo de assistente de desktop!)
+
+=== Caso: serio-priorizacao | modo: Sério ===
+Tempo: 8,34s | tokens reportados: 146 | finish: stop | limite atingido: False | resposta vazia: False | canal de raciocínio presente: False
+Resposta:
+1. 15 min – Responder e-mail urgente: prioridade imediata para evitar atrasos operacionais.  
+2. 20 min – Revisar pull request importante: garantir integridade do código e alinhamento com os requisitos.  
+3. 30 min – Começar relatório que vence hoje: focar na estrutura e dados essenciais para entrega pontual.  
+4. 25 min – Reservar pausa/transição: recarregar para manter foco e evitar sobrecarga mental.  
+(15 + 20 + 30 + 25 = 90 min).
+Linhas de agenda com minutos: 4; durações: 15, 20, 30, 25; soma 90: True
+
+=== Caso: codigo-python | modo: Trabalho / programação ===
+Tempo: 14,18s | tokens reportados: 199 | finish: stop | limite atingido: False | resposta vazia: False | canal de raciocínio presente: False
+Resposta:
+```python
+def somar_pares(valores: list[int]) -> int:
+    """
+    Soma apenas os números pares da lista de valores.
+    
+    Args:
+        valores: Lista de inteiros
+        
+    Returns:
+        Soma dos números pares da lista
+    """
+    total = 0
+    for valor in valores:
+        if valor % 2 == 0:
+            total += valor
+    return total
+
+# Testes com asserts
+assert somar_pares([]) == 0, "Lista vazia deve retornar 0"
+assert somar_pares([1, 2, 3, 4, 5]) == 6, "Valores mistos: 2 + 4 = 6"
+assert somar_pares([-2, -3, -4, 1, 5]) == -6, "Números negativos: -2 + (-4) = -6"
+```
+
+=== Caso: json-instructions | modo: Seguimento de instruções ===
+Tempo: 3,18s | tokens reportados: 32 | finish: stop | limite atingido: False | resposta vazia: False | canal de raciocínio presente: False
+Resposta:
+{"prioridade": "média", "proxima_acao": "avaliar qualidade das respostas", "risco": "baixo"}
+JSON parseável: True; chaves exatas: True; valores string: True

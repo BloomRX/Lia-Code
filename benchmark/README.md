@@ -8,9 +8,11 @@
    - `lia-benchmark-<data-hora>.log`
    - `lia-benchmark-<data-hora>.json`
 
-O script usa apenas componentes do Windows/PowerShell. Não instala programas, não baixa modelos e não altera drivers. Ele coleta informações básicas do Windows, CPU, RAM, GPU/driver, detecta Python/Git/Ollama/llama.cpp e, se Ollama já estiver instalado, lista somente os modelos locais. Não envia dados pela rede.
+O script usa apenas componentes do Windows/PowerShell. Não instala programas, não baixa modelos e não altera drivers. Ele coleta informações básicas do Windows, CPU, RAM, GPU/driver, detecta Python/Git/Ollama/llama.cpp e, se Ollama já estiver instalado, lista somente os modelos locais.
 
-Os resultados ficam ignorados pelo Git porque podem conter identificadores do computador. Revise os arquivos antes de compartilhar; o nome do computador e identificadores de hardware podem aparecer no log.
+Ao final, ele tenta automaticamente criar um commit contendo **apenas** os dois relatórios desta execução e fazer push para `origin/arena/01a0ec89-lia-code`. O processo recusa enviar se a branch atual for diferente da branch esperada ou se houver arquivos já staged. Git precisa estar instalado e autenticado; se o push falhar, os relatórios permanecem em `benchmark-results/` para envio manual. Nenhum outro arquivo do repositório é incluído pelo script.
+
+Os relatórios incluem detalhes do sistema e dos dispositivos, mas omitem nome do computador e identificadores PnP. Ainda assim, revise-os se preferir não compartilhar informações de hardware. O diretório fica ignorado pelo Git em uso normal; o script adiciona explicitamente apenas os relatórios gerados.
 
 ## O que esta primeira fase mede (fase 0)
 

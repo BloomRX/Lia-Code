@@ -28,7 +28,6 @@ try {
     $cpu = Get-CimInstance Win32_Processor -ErrorAction Stop | Select-Object -First 1
     $computer = Get-CimInstance Win32_ComputerSystem -ErrorAction Stop
     $report.machine = [ordered]@{
-        computerName = $env:COMPUTERNAME
         os = $os.Caption
         osVersion = $os.Version
         osBuild = $os.BuildNumber
@@ -50,7 +49,6 @@ try {
             driverDate = $gpu.DriverDate
             reportedVramGiB = $vram
             videoProcessor = $gpu.VideoProcessor
-            pnpDeviceId = $gpu.PNPDeviceID
         }
     }
 
@@ -115,6 +113,42 @@ try {
     }
     Stop-Transcript | Out-Null
 }
+
+# Submit only these generated report files, and only from the session's designated branch.
+# Refuse to commit if the user already has staged changes, so unrelated work is never included.
+$gitSummary = @()
+$gitCommand = Get-Command git -ErrorAction SilentlyContinue
+if ($gitCommand) {
+    Push-Location $root
+    try {
+        $branch = (& git branch --show-current 2>&1 | Out-String).Trim()
+        if ($branch -ne 'arena/01a0ec89-lia-code') {
+            $gitSummary += "AUTO-PUSH ignorado: branch atual '$branch' não é arena/01a0ec89-lia-code."
+        } else {
+            & git diff --cached --quiet
+            if ($LASTEXITCODE -ne 0) {
+                $gitSummary += 'AUTO-PUSH ignorado: há alterações já staged no repositório; faça submit manual para evitar incluir arquivos alheios.'
+            } else {
+                & git add -f -- $logPath $reportPath 2>&1 | ForEach-Object { $gitSummary += [string]$_ }
+                if ($LASTEXITCODE -ne 0) { throw 'git add falhou.' }
+                & git commit -m "Add local benchmark report $stamp" 2>&1 | ForEach-Object { $gitSummary += [string]$_ }
+                if ($LASTEXITCODE -ne 0) { throw 'git commit falhou.' }
+                & git push origin arena/01a0ec89-lia-code 2>&1 | ForEach-Object { $gitSummary += [string]$_ }
+                if ($LASTEXITCODE -ne 0) { throw 'git push falhou. Os relatórios continuam salvos localmente.' }
+                $gitSummary += 'Relatórios commitados e enviados para origin/arena/01a0ec89-lia-code.'
+            }
+        }
+    } catch {
+        $gitSummary += "AUTO-PUSH falhou: $($_.Exception.Message)"
+    } finally {
+        Pop-Location
+    }
+} else {
+    $gitSummary += 'AUTO-PUSH indisponível: Git não está instalado ou não está no PATH.'
+}
+
+Add-Content -LiteralPath $logPath -Value ($gitSummary -join [Environment]::NewLine)
+Write-Host "`n$($gitSummary -join [Environment]::NewLine)"
 
 if ($issues.Count -gt 0) {
     Write-Host "`nOcorreu um problema. O log foi salvo em: $logPath" -ForegroundColor Yellow

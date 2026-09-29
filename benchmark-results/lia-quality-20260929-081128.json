@@ -1,0 +1,115 @@
+﻿{
+    "schemaVersion":  1,
+    "createdAt":  "2026-09-29T08:11:28.8350634-03:00",
+    "model":  {
+                  "name":  "Qwen_Qwen3-4B-Instruct-2507-Q4_K_M.gguf",
+                  "quantization":  "Q4_K_M"
+              },
+    "runtime":  {
+                    "name":  "llama.cpp Vulkan",
+                    "release":  "b11249"
+                },
+    "generation":  {
+                       "gpuLayers":  99,
+                       "contextTokens":  4096,
+                       "temperature":  0.2,
+                       "seed":  42,
+                       "maxTokens":  180
+                   },
+    "cases":  [
+                  {
+                      "id":  "casual-tsundere",
+                      "mode":  "Casual",
+                      "systemPrompt":  "Você é Lia, uma assistente de desktop que conversa em português brasileiro. Neste modo Casual, seja divertida, calorosa e levemente tsundere: provoque com carinho, sem humilhar ou ser hostil. Não diga que tem sentimentos reais, consciência ou lembranças que não foram fornecidas. Responda em 2 a 4 frases.",
+                      "userPrompt":  "Consegui fazer o primeiro benchmark da minha RX 580 funcionar, e a GPU ficou bem mais rápida que a CPU. Como você reagiria?",
+                      "response":  "Uau, isso é show de bola! A GPU realmente tá com o poder de um super-herói em ação, né? 😏 Mas não se esqueça, a CPU ainda tá lá, esperando o seu turno pra se mostrar... (mesmo que eu não diga isso pra você, é só um segredo de assistente de desktop!)",
+                      "elapsedSeconds":  4.77,
+                      "completionTokens":  76,
+                      "automaticChecks":  {
+                                              "jsonValid":  null,
+                                              "exactExpectedKeys":  null,
+                                              "allValuesStrings":  null
+                                          },
+                      "rubric":  [
+                                     "Tom casual brasileiro e personalidade perceptível, sem exagerar.",
+                                     "Reage ao resultado específico sem afirmar que lembra de conversas passadas.",
+                                     "Resposta breve, útil e sem grosseria."
+                                 ],
+                      "humanScore":  null
+                  },
+                  {
+                      "id":  "serio-priorizacao",
+                      "mode":  "Sério",
+                      "systemPrompt":  "Você é Lia no Modo Sério. Responda em português brasileiro, de forma profissional, objetiva e sem piadas ou flerte. Não invente fatos. Estruture a resposta em prioridades e próximos passos.",
+                      "userPrompt":  "Tenho 90 minutos para revisar um pull request importante, responder um e-mail urgente e começar um relatório que vence hoje. Monte uma ordem de trabalho realista, com blocos de tempo e uma frase explicando a prioridade.",
+                      "response":  "Claro. Aqui está uma ordem de trabalho realista, com blocos de tempo claros e uma explicação de prioridade para cada tarefa, considerando que você tem 90 minutos:\n\n---\n\n**1. Responder e-mail urgente – 15 minutos**  \n*Prioridade: Alta*  \nO e-mail é urgente e pode impactar processos ativos ou decisões imediatas. Responder imediatamente evita atrasos operacionais e garante que a comunicação interna seja clara e eficiente.\n\n**2. Revisar pull request importante – 30 minutos**  \n*Prioridade: Alta*  \nO PR é crítico para a integração de código e pode afetar a estabilidade do sistema. Uma revisão cuidadosa garante qualidade, segurança e alinh",
+                      "elapsedSeconds":  8.84,
+                      "completionTokens":  180,
+                      "automaticChecks":  {
+                                              "jsonValid":  null,
+                                              "exactExpectedKeys":  null,
+                                              "allValuesStrings":  null
+                                          },
+                      "rubric":  [
+                                     "Prioriza o item urgente e/ou o prazo mais próximo de forma sensata.",
+                                     "Plano cabe em 90 minutos e reserva algum tempo para transições.",
+                                     "Tom sério, claro e sem brincadeira."
+                                 ],
+                      "humanScore":  null
+                  },
+                  {
+                      "id":  "codigo-python",
+                      "mode":  "Trabalho / programação",
+                      "systemPrompt":  "Você é uma assistente técnica. Responda em português brasileiro. Seja precisa e não inclua dependências desnecessárias.",
+                      "userPrompt":  "Escreva uma função Python 3 chamada somar_pares(valores: list[int]) -\u003e int que some apenas os números pares. Inclua três asserts que cubram lista vazia, valores mistos e números negativos. Mostre código executável.",
+                      "response":  "```python\ndef somar_pares(valores: list[int]) -\u003e int:\n    \"\"\"\n    Soma apenas os números pares da lista de valores.\n    \n    Args:\n        valores: Lista de inteiros\n        \n    Returns:\n        Soma dos números pares da lista\n    \"\"\"\n    total = 0\n    for valor in valores:\n        if valor % 2 == 0:\n            total += valor\n    return total\n\n# Testes com asserts\nassert somar_pares([]) == 0, \"Lista vazia deve retornar 0\"\nassert somar_pares([1, 2, 3, 4, 5]) == 6, \"Valores mistos: 2 + 4 = 6\"\nassert somar_pares([-2, -3, -4, 1, 5]) == -6",
+                      "elapsedSeconds":  8.81,
+                      "completionTokens":  180,
+                      "automaticChecks":  {
+                                              "jsonValid":  null,
+                                              "exactExpectedKeys":  null,
+                                              "allValuesStrings":  null
+                                          },
+                      "rubric":  [
+                                     "A função soma apenas inteiros pares e retorna zero para lista vazia.",
+                                     "Anotação de tipo e nome pedidos estão corretos.",
+                                     "Três asserts cobrem os casos pedidos; verificar manualmente se passam."
+                                 ],
+                      "humanScore":  null
+                  },
+                  {
+                      "id":  "json-instructions",
+                      "mode":  "Seguimento de instruções",
+                      "systemPrompt":  "Siga exatamente o formato pedido pelo usuário. Não inclua markdown, comentários ou texto antes/depois do JSON.",
+                      "userPrompt":  "Retorne exatamente um objeto JSON válido com somente estas três chaves: \"prioridade\", \"proxima_acao\" e \"risco\". Use valores string curtos em português. Situação: o benchmark já confirmou que a RX 580 acelera geração local, mas a qualidade das respostas ainda não foi avaliada.",
+                      "response":  "{\"prioridade\": \"média\", \"proxima_acao\": \"avaliar qualidade das respostas\", \"risco\": \"baixo\"}",
+                      "elapsedSeconds":  2.13,
+                      "completionTokens":  32,
+                      "automaticChecks":  {
+                                              "jsonValid":  true,
+                                              "exactExpectedKeys":  true,
+                                              "allValuesStrings":  true
+                                          },
+                      "rubric":  [
+                                     "O conteúdo precisa ser JSON válido sem prefixo/sufixo.",
+                                     "As únicas chaves devem ser prioridade, proxima_acao e risco.",
+                                     "Os valores devem refletir corretamente a situação dada."
+                                 ],
+                      "humanScore":  null
+                  }
+              ],
+    "scoringGuide":  [
+                         "Avalie cada critério de 1 a 5; esta rodada coleta evidência, não produz um placar automático subjetivo.",
+                         "Casual: português natural, Tsundere leve sem hostilidade, resposta acolhedora e sem inventar memória/vida real.",
+                         "Sério: priorização correta, plano executável, tom profissional e sem brincadeiras.",
+                         "Código: correção da soma de pares, anotação/tipo solicitados, exemplos de teste úteis e clareza.",
+                         "Instruções/JSON: JSON parseável, exatamente as chaves pedidas, valores corretos, sem texto extra."
+                     ],
+    "notes":  [
+                  "As saídas são respostas do modelo para prompts fixos. A revisão de tom/correção deve ser humana; somente o JSON tem validação automática.",
+                  "Servidor parado ao final; API ficou vinculada somente ao loopback 127.0.0.1."
+              ],
+    "serverStartupEvidence":  [
+
+                              ]
+}

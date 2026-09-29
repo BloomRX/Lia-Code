@@ -1,0 +1,14 @@
+Lia-Code inference benchmark | 20260929-075447
+Lia-Code - benchmark local de inferência
+Vai baixar um runtime Vulkan e um modelo GGUF (~2,5 GB para o modelo).
+Cache: %USERPROFILE%\AppData\Local\Lia-Code\benchmark-cache
+Espaço livre no drive do cache: 211,4 GB
+Runtime em cache reutilizado.
+Modelo em cache reutilizado.
+
+Dispositivos reportados pelo llama.cpp:
+Available devices:
+  Vulkan0: AMD Radeon RX 580 2048SP (8192 MiB, 7367 MiB free)
+
+=== CPU baseline (GPU layers: 0) ===
+ERRO durante CPU baseline benchmark: load_backend: loaded RPC backend from %USERPROFILE%\AppData\Local\Lia-Code\benchmark-cache\llama-b11249-vulkan\ggml-rpc.dll

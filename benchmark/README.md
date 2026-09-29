@@ -1,29 +1,29 @@
-# Benchmark inicial da Lia-Code
+# Benchmarks da Lia-Code
 
-## Executar no Windows
+## Um clique para o próximo teste
 
-1. Baixe/cl clone esta branch do Lia-Code.
-2. Execute `benchmark/Run-Lia-Benchmark.bat` com duplo clique.
-3. Ao terminar, envie de volta os arquivos criados em `benchmark-results/`:
-   - `lia-benchmark-<data-hora>.log`
-   - `lia-benchmark-<data-hora>.json`
+Na raiz do repositório, execute `Update-Lia.bat`. Sem argumento, ele atualiza a branch da sessão e roda a avaliação de qualidade, usando o modelo e runtime já baixados no cache local. Os relatórios são salvos em `benchmark-results/` e enviados automaticamente para `origin/arena/01a0ec89-lia-code` quando Git estiver autenticado.
 
-O script usa apenas componentes do Windows/PowerShell. Não instala programas, não baixa modelos e não altera drivers. Ele coleta informações básicas do Windows, CPU, RAM, GPU/driver, detecta Python/Git/Ollama/llama.cpp e, se Ollama já estiver instalado, lista somente os modelos locais.
+O atualizador faz backup de relatórios rastreados que estejam localmente alterados para `%LOCALAPPDATA%\Lia-Code\report-backups`, restaura apenas esses arquivos gerados e então executa `git pull --ff-only`. Alterações de código não são restauradas nem descartadas.
 
-Ao final, ele tenta automaticamente criar um commit contendo **apenas** os dois relatórios desta execução e fazer push para `origin/arena/01a0ec89-lia-code`. O processo recusa enviar se a branch atual for diferente da branch esperada ou se houver arquivos já staged. Git precisa estar instalado e autenticado; se o push falhar, os relatórios permanecem em `benchmark-results/` para envio manual. Nenhum outro arquivo do repositório é incluído pelo script.
+Para repetir o benchmark de velocidade, use `Update-Lia.bat speed`. Ambos os modos usam a branch `arena/01a0ec89-lia-code`.
 
-Os relatórios incluem detalhes do sistema e dos dispositivos, mas omitem nome do computador e identificadores PnP. Ainda assim, revise-os se preferir não compartilhar informações de hardware. O diretório fica ignorado pelo Git em uso normal; o script adiciona explicitamente apenas os relatórios gerados.
+## Fase 0 — diagnóstico de ambiente
 
-## O que esta primeira fase mede (fase 0)
+`benchmark/Run-Lia-Benchmark.bat` registra informações gerais de Windows, CPU, RAM, GPU/driver e runtimes encontrados. Não instala programas nem baixa modelos. A leitura de VRAM via WMI pode estar limitada; o runtime Vulkan fornece uma confirmação melhor.
 
-Esta rodada verifica o ambiente e os runtimes disponíveis. **Ainda não mede tokens por segundo, latência real de inferência nem qualidade do modelo.** Não é correto comparar modelos antes de escolhermos um runtime e uma configuração compatíveis com a RX 580. A informação de VRAM obtida via WMI pode ser incompleta; validaremos isso com o runtime escolhido.
+## Fase 1 — velocidade local
 
-## Fase 1 — benchmark de inferência local
+`Update-Lia.bat speed` compara CPU (`-ngl 0`) com offload Vulkan (`-ngl 99`) no modelo Qwen3-4B-Instruct-2507 Q4_K_M, usando 256 tokens de prompt, até 64 tokens de geração, seis threads e duas repetições. Métricas são throughput; não são avaliação de qualidade.
 
-Execute `Update-Lia.bat` na raiz do repositório. Ele valida que o clone está na branch da sessão, faz `git pull --ff-only` dessa branch e inicia `run-inference-benchmark.ps1`. Se relatórios rastreados tiverem alterações locais (por exemplo, texto de status acrescentado após o commit automático), faz backup deles em `%LOCALAPPDATA%\Lia-Code\report-backups` e restaura somente esses relatórios antes do pull; alterações de código não são descartadas. Na primeira execução, o script pede confirmação antes de baixar o llama.cpp com Vulkan e o modelo Qwen3-4B-Instruct-2507 Q4_K_M (aproximadamente 2,5 GB). Não instala drivers nem altera configurações do Windows. Os downloads ficam em `%LOCALAPPDATA%\Lia-Code\benchmark-cache`, fora do repositório, e são reutilizados nas próximas execuções.
+O runtime llama.cpp e o modelo GGUF são baixados somente se faltarem, com confirmação, para `%LOCALAPPDATA%\Lia-Code\benchmark-cache`; o modelo tem cerca de 2,5 GB. Nenhum driver é instalado ou alterado.
 
-O teste roda `llama-bench` com parâmetros fixos (256 tokens de prompt, até 64 tokens gerados, 6 threads, 2 repetições): primeiro CPU (`-ngl 0`), depois tenta Vulkan na RX AMD se o runtime a detectar. Registra saída bruta, duração e erros. Isso mede throughput, não qualidade de respostas nem consumo de VRAM com precisão; se Vulkan não reconhecer a placa, o benchmark CPU ainda é guardado e enviado.
+## Fase 2 — qualidade das respostas
 
-Ao terminar, tenta fazer commit e push apenas dos dois relatórios de inferência para `origin/arena/01a0ec89-lia-code`. O processo para se estiver em outra branch ou se houver alterações staged, para evitar incluir outros arquivos. Requer Git autenticado no Windows. Se push falhar, os resultados continuam em `benchmark-results/`. Os logs desta fase não usam cabeçalho de transcrição do PowerShell e substituem o caminho do perfil por `%USERPROFILE%` para evitar publicar o usuário do Windows.
+`Update-Lia.bat` executa quatro prompts fixos via servidor local compatível com Chat Completions, vinculado somente a `127.0.0.1`: persona Casual/Tsundere, Modo Sério, programação Python e cumprimento de instruções/JSON. Guarda prompt, resposta, latência e uma rubrica para avaliação humana. Só o formato JSON recebe checagem automática objetiva; não há um “placar de inteligência” automático.
 
-A linha de comando de atualização automática é limitada a `git pull --ff-only origin arena/01a0ec89-lia-code`; se houver divergência ou alterações que impeçam o avanço seguro, ela para sem sobrescrever arquivos.
+As respostas são evidência comparável para avaliar o modelo, não garantias de personalidade ou correção. Se o cache/modelo não existir, primeiro rode `Update-Lia.bat speed`.
+
+## Privacidade e envio dos resultados
+
+Os scripts evitam o cabeçalho de transcrição do PowerShell e substituem o caminho do perfil por `%USERPROFILE%` nos logs. Os logs contêm especificações do hardware e saídas do modelo. O auto-submit adiciona somente o `.log` e `.json` gerados daquela execução; ele para se estiver em outra branch ou se houver alterações já staged. Se o push falhar, os relatórios ficam em `benchmark-results/`.

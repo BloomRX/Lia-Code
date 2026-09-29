@@ -42,10 +42,21 @@ if not "%PULL_RESULT%"=="0" (
   exit /b %PULL_RESULT%
 )
 
-echo Iniciando benchmark local de inferencia...
-powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0benchmark\run-inference-benchmark.ps1"
+set "TEST_MODE=%~1"
+if not defined TEST_MODE set "TEST_MODE=quality"
+if /i "%TEST_MODE%"=="quality" set "PS_SCRIPT=%~dp0benchmark\run-quality-evaluation.ps1"
+if /i "%TEST_MODE%"=="speed" set "PS_SCRIPT=%~dp0benchmark\run-inference-benchmark.ps1"
+if not defined PS_SCRIPT (
+  echo Uso: Update-Lia.bat [quality^|speed]
+  echo Sem argumento, executa a avaliacao de qualidade.
+  pause
+  exit /b 2
+)
+
+echo Iniciando teste %TEST_MODE%...
+powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%PS_SCRIPT%"
 set "RESULT=%ERRORLEVEL%"
 echo.
-if not "%RESULT%"=="0" echo Benchmark terminou com erro. Consulte benchmark-results.
+if not "%RESULT%"=="0" echo Teste terminou com erro. Consulte benchmark-results.
 pause
 exit /b %RESULT%

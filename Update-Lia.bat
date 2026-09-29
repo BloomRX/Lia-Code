@@ -43,7 +43,8 @@ if not "%PULL_RESULT%"=="0" (
 )
 
 set "TEST_MODE=%~1"
-if not defined TEST_MODE set "TEST_MODE=quality"
+if not defined TEST_MODE set "TEST_MODE=quality-both"
+if /i "%TEST_MODE%"=="quality-both" set "PS_SCRIPT=%~dp0benchmark\run-quality-evaluation.ps1"
 if /i "%TEST_MODE%"=="quality" set "PS_SCRIPT=%~dp0benchmark\run-quality-evaluation.ps1"
 if /i "%TEST_MODE%"=="quality-8b" (
   set "PS_SCRIPT=%~dp0benchmark\run-quality-evaluation.ps1"
@@ -51,16 +52,51 @@ if /i "%TEST_MODE%"=="quality-8b" (
 )
 if /i "%TEST_MODE%"=="speed" set "PS_SCRIPT=%~dp0benchmark\run-inference-benchmark.ps1"
 if not defined PS_SCRIPT (
-  echo Uso: Update-Lia.bat [quality^|quality-8b^|speed]
-  echo Sem argumento, roda a avaliacao de qualidade do controle Qwen3-4B.
+  echo Uso: Update-Lia.bat [quality-both^|quality^|quality-8b^|speed]
+  echo Sem argumento, roda controle 4B e candidato 8B em sequencia.
   pause
   exit /b 2
 )
 
+if /i "%TEST_MODE%"=="quality-both" goto run_both
+
 echo Iniciando teste %TEST_MODE%...
 powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%PS_SCRIPT%" %PS_ARGS%
 set "RESULT=%ERRORLEVEL%"
+goto finish
+
+:run_both
+echo Esta rodada executara os dois modelos em sequencia: controle Qwen3-4B e candidato Qwen3-8B.
+echo Os relatorios de cada modelo serao salvos e enviados automaticamente.
+tasklist /fi "imagename eq chrome.exe" /nh 2>nul | find /i "chrome.exe" >nul
+if not errorlevel 1 (
+  echo.
+  echo AVISO: Chrome esta aberto. Na RX 580 com 8 GB, ele pode ocupar VRAM e atrapalhar o teste 8B.
+  choice /c SRC /n /m "Feche o Chrome e pressione S para seguir; R roda mesmo assim; C cancela: "
+  if errorlevel 3 (
+    echo Teste cancelado. Nenhum modelo foi executado.
+    set "RESULT=3"
+    goto finish
+  )
+  if errorlevel 2 echo Voce escolheu continuar com o Chrome aberto; o teste 8B pode falhar por falta de VRAM.
+)
 echo.
-if not "%RESULT%"=="0" echo Teste terminou com erro. Consulte benchmark-results.
+echo ===== MODELO DE CONTROLE: QWEN3-4B =====
+powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%PS_SCRIPT%"
+set "RESULT4=%ERRORLEVEL%"
+echo.
+echo ===== MODELO CANDIDATO: QWEN3-8B =====
+powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%PS_SCRIPT%" -ModelVariant 8B
+set "RESULT8=%ERRORLEVEL%"
+set "RESULT=1"
+if "!RESULT4!"=="0" if "!RESULT8!"=="0" set "RESULT=0"
+if not "!RESULT4!"=="0" echo O teste 4B terminou com erro. Confira o relatorio local.
+if not "!RESULT8!"=="0" echo O teste 8B terminou com erro. Confira o relatorio local.
+
+goto finish
+
+:finish
+echo.
+if not "%RESULT%"=="0" echo A rotina terminou com codigo %RESULT%. Consulte benchmark-results.
 pause
 exit /b %RESULT%

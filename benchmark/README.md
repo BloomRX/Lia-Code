@@ -2,7 +2,7 @@
 
 ## Um clique para o próximo teste
 
-Na raiz do repositório, execute `Update-Lia.bat`. Sem argumento, ele atualiza a branch da sessão e roda a avaliação de qualidade no modelo-controle Qwen3-4B. Use `Test-Lia-8B.bat` para avaliar o candidato Qwen3-8B Q4_K_M com os mesmos prompts, ou `Update-Lia.bat speed` para repetir o benchmark de throughput. Também é possível chamar `Update-Lia.bat quality-8b` em um terminal. Os relatórios são salvos em `benchmark-results/` e enviados automaticamente para `origin/arena/01a0ec89-lia-code` quando Git estiver autenticado.
+Para não esquecer um dos modelos, execute **`Test-Lia-Quality.bat`** na raiz (ou `Update-Lia.bat` sem argumentos). O launcher atualiza a branch uma vez e roda, em sequência, o controle Qwen3-4B e o candidato Qwen3-8B, salvando e enviando cada relatório. Se detectar o Chrome aberto, avisa que ele pode consumir VRAM na RX 580 de 8 GB: feche-o e escolha S, escolha R para prosseguir mesmo assim, ou C para cancelar. O teste 8B reutiliza o modelo em cache; se estiver ausente, pede confirmação antes do download grande. Para executar um só, ainda existem `Update-Lia.bat quality`, `Update-Lia.bat quality-8b` e `Test-Lia-8B.bat`; para throughput, use `Update-Lia.bat speed`. Os relatórios ficam em `benchmark-results/` e são enviados para `origin/arena/01a0ec89-lia-code` quando Git estiver autenticado.
 
 O atualizador faz backup de relatórios rastreados que estejam localmente alterados para `%LOCALAPPDATA%\Lia-Code\report-backups`, restaura apenas esses arquivos gerados e então executa `git pull --ff-only`. Alterações de código não são restauradas nem descartadas.
 

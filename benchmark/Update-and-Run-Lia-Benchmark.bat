@@ -13,6 +13,27 @@ if not "%CURRENT_BRANCH%"=="%EXPECTED_BRANCH%" (
   exit /b 1
 )
 
+rem Generated benchmark reports can be modified locally after their auto-commit (the script appends status text).
+rem Back them up outside the repo and restore only report files before pulling; leave all source changes untouched.
+git diff --quiet -- benchmark-results
+if errorlevel 1 (
+  set "BACKUP_DIR=%LOCALAPPDATA%\Lia-Code\report-backups\pull-%RANDOM%-%RANDOM%"
+  echo Relatorios locais alterados detectados. Fazendo backup em "%BACKUP_DIR%"...
+  if not exist "%BACKUP_DIR%" mkdir "%BACKUP_DIR%"
+  xcopy "benchmark-results\*" "%BACKUP_DIR%\" /e /i /h /y >nul
+  if errorlevel 1 (
+    echo ERRO: nao foi possivel fazer backup dos relatorios. Nada sera descartado.
+    pause
+    exit /b 1
+  )
+  git restore --worktree -- benchmark-results
+  if errorlevel 1 (
+    echo ERRO: nao foi possivel limpar somente os relatorios gerados.
+    pause
+    exit /b 1
+  )
+)
+
 echo Atualizando a branch %EXPECTED_BRANCH%...
 git pull --ff-only origin %EXPECTED_BRANCH%
 if errorlevel 1 (

@@ -18,4 +18,12 @@ Os relatórios incluem detalhes do sistema e dos dispositivos, mas omitem nome d
 
 Esta rodada verifica o ambiente e os runtimes disponíveis. **Ainda não mede tokens por segundo, latência real de inferência nem qualidade do modelo.** Não é correto comparar modelos antes de escolhermos um runtime e uma configuração compatíveis com a RX 580. A informação de VRAM obtida via WMI pode ser incompleta; validaremos isso com o runtime escolhido.
 
-Depois de analisar o relatório, a próxima rodada será um teste de inferência repetível, com modelo/configuração explicitamente selecionados, prompts fixos e medições de tempo, memória e erros. Nenhum modelo será baixado sem decisão explícita.
+## Fase 1 — benchmark de inferência local
+
+Execute `benchmark/Update-and-Run-Lia-Benchmark.bat`. Ele valida que o clone está na branch da sessão, faz `git pull --ff-only` dessa branch e inicia `run-inference-benchmark.ps1`. Na primeira execução, o script pede confirmação antes de baixar o llama.cpp com Vulkan e o modelo Qwen3-4B-Instruct-2507 Q4_K_M (aproximadamente 2,5 GB). Não instala drivers nem altera configurações do Windows. Os downloads ficam em `%LOCALAPPDATA%\Lia-Code\benchmark-cache`, fora do repositório, e são reutilizados nas próximas execuções.
+
+O teste roda `llama-bench` com parâmetros fixos (256 tokens de prompt, até 64 tokens gerados, 6 threads, 2 repetições): primeiro CPU (`-ngl 0`), depois tenta Vulkan na RX AMD se o runtime a detectar. Registra saída bruta, duração e erros. Isso mede throughput, não qualidade de respostas nem consumo de VRAM com precisão; se Vulkan não reconhecer a placa, o benchmark CPU ainda é guardado e enviado.
+
+Ao terminar, tenta fazer commit e push apenas dos dois relatórios de inferência para `origin/arena/01a0ec89-lia-code`. O processo para se estiver em outra branch ou se houver alterações staged, para evitar incluir outros arquivos. Requer Git autenticado no Windows. Se push falhar, os resultados continuam em `benchmark-results/`.
+
+A linha de comando de atualização automática é limitada a `git pull --ff-only origin arena/01a0ec89-lia-code`; se houver divergência ou alterações que impeçam o avanço seguro, ela para sem sobrescrever arquivos.

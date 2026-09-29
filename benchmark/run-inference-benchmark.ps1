@@ -53,7 +53,7 @@ try {
         Write-Host 'Baixando modelo Qwen3-4B-Instruct-2507 Q4_K_M (~2,5 GB)...'
         Invoke-WebRequest -Uri $modelUrl -OutFile $modelPath -UseBasicParsing
     } else { Write-Host "Modelo em cache: $modelPath" }
-    if ((Get-Item -LiteralPath $modelPath).Length -lt 1GB) { throw 'O arquivo de modelo é pequeno demais; download incompleto ou página de erro salva como arquivo.' }
+    if ((Get-Item -LiteralPath $modelPath).Length -lt 2.2GB) { throw 'O modelo tem menos de 2,2 GiB; download incompleto ou página de erro salva como arquivo. Apague o arquivo incompleto no cache e tente novamente.' }
 
     Write-Host "`nDispositivos reportados pelo llama.cpp:"
     $devices = @(& $cli.Source '--list-devices' 2>&1 | ForEach-Object { [string]$_ })

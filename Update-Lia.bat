@@ -46,14 +46,19 @@ set "TEST_MODE=%~1"
 if not defined TEST_MODE set "TEST_MODE=quality-both"
 if /i "%TEST_MODE%"=="quality-both" set "PS_SCRIPT=%~dp0benchmark\run-quality-evaluation.ps1"
 if /i "%TEST_MODE%"=="quality" set "PS_SCRIPT=%~dp0benchmark\run-quality-evaluation.ps1"
+if /i "%TEST_MODE%"=="personality" (
+  set "PS_SCRIPT=%~dp0benchmark\run-quality-evaluation.ps1"
+  set "PS_ARGS=-Suite personality"
+)
 if /i "%TEST_MODE%"=="quality-8b" (
   set "PS_SCRIPT=%~dp0benchmark\run-quality-evaluation.ps1"
   set "PS_ARGS=-ModelVariant 8B"
 )
 if /i "%TEST_MODE%"=="speed" set "PS_SCRIPT=%~dp0benchmark\run-inference-benchmark.ps1"
 if not defined PS_SCRIPT (
-  echo Uso: Update-Lia.bat [quality-both^|quality^|quality-8b^|speed]
-  echo Sem argumento, roda controle 4B e candidato 8B em sequencia.
+echo Uso: Update-Lia.bat [quality-both^|quality^|quality-8b^|personality^|speed]
+echo Sem argumento, roda controle 4B e candidato 8B em sequencia.
+echo personality compara os prompts de personalidade no Qwen3-4B.
   pause
   exit /b 2
 )

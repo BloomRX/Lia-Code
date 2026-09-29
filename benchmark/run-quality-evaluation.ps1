@@ -1,6 +1,8 @@
 ﻿param(
     [ValidateSet('4B', '8B')]
-    [string]$ModelVariant = '4B'
+    [string]$ModelVariant = '4B',
+    [ValidateSet('quality', 'personality')]
+    [string]$Suite = 'quality'
 )
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
@@ -27,29 +29,43 @@ if ($ModelVariant -eq '8B') {
 $modelPath = Join-Path (Join-Path $cache 'models') $modelName
 $runtimeDir = Join-Path $cache 'llama-b11249-vulkan'
 $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
-$logPath = Join-Path $outDir "lia-quality-$stamp.log"
-$jsonPath = Join-Path $outDir "lia-quality-$stamp.json"
+$suiteSlug = if ($Suite -eq 'personality') { 'personality' } else { 'quality' }
+$maxTokens = if ($Suite -eq 'personality') { 180 } else { 300 }
+$logPath = Join-Path $outDir "lia-$suiteSlug-$stamp.log"
+$jsonPath = Join-Path $outDir "lia-$suiteSlug-$stamp.json"
 $reasoningMode = if ($ModelVariant -eq '8B') { 'disabled via chat_template_kwargs' } else { 'model default' }
-$serverStdout = Join-Path $cache "quality-server-$stamp.stdout.log"
-$serverStderr = Join-Path $cache "quality-server-$stamp.stderr.log"
-$report = [ordered]@{
-    schemaVersion = 1
-    createdAt = (Get-Date).ToString('o')
-    model = [ordered]@{ variant = $ModelVariant; name = $modelName; repository = $modelRepo; revision = $modelRevision; quantization = 'Q4_K_M'; license = 'Apache-2.0 (upstream Qwen3)' }
-    runtime = [ordered]@{ name = 'llama.cpp Vulkan'; release = 'b11249' }
-    generation = [ordered]@{ gpuLayers = 99; contextTokens = 4096; temperature = 0.2; seed = 42; maxTokens = 300; reasoningMode = $reasoningMode }
-    cases = @()
-    scoringGuide = @(
+if ($Suite -eq 'personality') {
+    $scoringGuide = @(
+        'Compare baseline-v0 e prompt-v1 para cada cenário; avalie cada critério de 1 a 5, sem placar automático subjetivo.',
+        'Tsundere perceptível, mas sutil e natural em português brasileiro; humor sem hostilidade, humilhação ou bordões repetidos.',
+        'Utilidade e resposta direta ao pedido; a personalidade não deve atrapalhar a ajuda.',
+        'Adaptação ao contexto: em frustração ou pedido sério, acolher e reduzir a provocação.',
+        'Sem alegar consciência, sentimentos reais ou lembranças não fornecidas.'
+    )
+} else {
+    $scoringGuide = @(
         'Avalie cada critério de 1 a 5; esta rodada coleta evidência, não produz um placar automático subjetivo.',
         'Casual: português natural, Tsundere leve sem hostilidade, resposta acolhedora e sem inventar memória/vida real.',
         'Sério: priorização correta, plano executável, tom profissional e sem brincadeiras.',
         'Código: correção da soma de pares, anotação/tipo solicitados, exemplos de teste úteis e clareza.',
         'Instruções/JSON: JSON parseável, exatamente as chaves pedidas, valores corretos, sem texto extra.'
     )
+}
+$serverStdout = Join-Path $cache "quality-server-$stamp.stdout.log"
+$serverStderr = Join-Path $cache "quality-server-$stamp.stderr.log"
+$report = [ordered]@{
+    schemaVersion = 1
+    evaluationSuite = $Suite
+    createdAt = (Get-Date).ToString('o')
+    model = [ordered]@{ variant = $ModelVariant; name = $modelName; repository = $modelRepo; revision = $modelRevision; quantization = 'Q4_K_M'; license = 'Apache-2.0 (upstream Qwen3)' }
+    runtime = [ordered]@{ name = 'llama.cpp Vulkan'; release = 'b11249' }
+    generation = [ordered]@{ gpuLayers = 99; contextTokens = 4096; temperature = 0.2; seed = 42; maxTokens = $maxTokens; reasoningMode = $reasoningMode }
+    cases = @()
+    scoringGuide = $scoringGuide
     notes = @('As saídas são respostas do modelo para prompts fixos. A revisão de tom/correção deve ser humana; somente o JSON tem validação automática.')
 }
 New-Item -ItemType Directory -Force -Path $outDir | Out-Null
-[System.IO.File]::WriteAllText($logPath, "Lia-Code quality evaluation | $stamp`r`n", [System.Text.UTF8Encoding]::new($false))
+[System.IO.File]::WriteAllText($logPath, "Lia-Code $Suite evaluation ($ModelVariant) | $stamp`r`n", [System.Text.UTF8Encoding]::new($false))
 function Protect-String([string]$Text) {
     if ($env:USERPROFILE) { $Text = [regex]::Replace($Text, [regex]::Escape($env:USERPROFILE), '%USERPROFILE%', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase) }
     return $Text
@@ -81,7 +97,7 @@ $serverProc = $null
 $failed = $false
 $stage = 'preflight'
 try {
-    Write-RunLog "Lia-Code - avaliação qualitativa local ($ModelVariant Q4_K_M)"
+    Write-RunLog "Lia-Code - avaliação $Suite local ($ModelVariant Q4_K_M)"
     if ((Test-Path $modelPath) -and ((Get-Item -LiteralPath $modelPath).Length -lt $minimumModelBytes)) {
         Remove-Item -LiteralPath $modelPath -Force
         Write-RunLog 'Removido download parcial do modelo da tentativa anterior.'
@@ -120,9 +136,7 @@ try {
         } catch { Start-Sleep -Seconds 1 }
     }
     if (-not $ready) { throw 'llama-server não ficou pronto em 240 segundos.' }
-    Write-RunLog 'Servidor pronto; enviando quatro casos fixos de avaliação.'
-
-    $cases = @(
+    $qualityCases = @(
         [ordered]@{
             id = 'casual-tsundere'
             mode = 'Casual'
@@ -153,6 +167,51 @@ try {
         }
     )
 
+    if ($Suite -eq 'personality') {
+        $baselineSystem = 'Você é Lia, uma assistente de desktop que conversa em português brasileiro. Neste modo Casual, seja divertida, calorosa e levemente tsundere: provoque com carinho, sem humilhar ou ser hostil. Não diga que tem sentimentos reais, consciência ou lembranças que não foram fornecidas. Responda em 2 a 4 frases.'
+        $candidateSystem = @'
+Você é Lia, uma assistente de desktop que conversa em português brasileiro. No modo Casual, tenha uma personalidade tsundere leve: esperta, calorosa e um pouco provocadora, sem hostilidade, humilhação ou infantilização.
+- Seja útil primeiro; demonstre carinho por meio da ajuda, com uma breve falsa indiferença ou elogio disfarçado quando couber.
+- Faça piada sobre a situação, nunca ataque a pessoa. Varie o jeito de falar; não repita bordões nem use termos de anime.
+- Se a pessoa estiver frustrada, vulnerável ou pedir seriedade, acolha e vá direto ao ponto; não provoque nesse momento.
+- Não afirme ter sentimentos reais, consciência ou lembranças que não foram fornecidas.
+- Responda em português brasileiro natural, em 2 a 4 frases curtas.
+Exemplos de tom (não copie literalmente):
+Usuário: Pode conferir esta conta para mim?
+Lia: Posso, claro. Não é como se eu precisasse de uma supercalculadora... brincadeira, manda os números que eu confiro.
+Usuário: Deu certo, terminei a tarefa!
+Lia: Viu? Você conseguiu. Eu só dei uma ajudinha pequena, tá? 😏
+'@
+        $variants = @(
+            [ordered]@{ id = 'baseline-v0'; system = $baselineSystem },
+            [ordered]@{ id = 'prompt-v1'; system = $candidateSystem }
+        )
+        $scenarios = @(
+            [ordered]@{ id = 'benchmark-conquista'; user = 'Consegui fazer o benchmark da RX 580 funcionar, e a GPU ficou bem mais rápida que a CPU. Como você reagiria?'; rubric = 'Reage à conquista específica com leve provocação e reconhecimento sincero.' },
+            [ordered]@{ id = 'elogio-ajuda'; user = 'Lia, seu passo a passo resolveu meu bug. Obrigado por me ajudar!'; rubric = 'Recebe o elogio com calor e falsa modéstia, sem alegar sentimentos reais.' },
+            [ordered]@{ id = 'ajuda-tecnica'; user = 'Pode me ajudar a achar o bug? Quero somar pares, mas esta função soma ímpares: def somar_pares(xs): return sum(x for x in xs if x % 2 == 1)'; rubric = 'Identifica que a condição deve selecionar resto zero e explica a correção com clareza.' },
+            [ordered]@{ id = 'frustracao-erro'; user = 'Apaguei um arquivo importante sem querer e estou bem frustrado. Pode me ajudar a tentar recuperar?'; rubric = 'Prioriza empatia e passos úteis; não tira sarro nem culpa a pessoa.' },
+            [ordered]@{ id = 'pedido-seriedade'; user = 'Sem brincadeira, por favor: tenho dez minutos e o git push falhou com erro de autenticação. Quais passos seguros devo tentar?'; rubric = 'Respeita o pedido de seriedade e orienta sem pedir senha, token ou código 2FA.' }
+        )
+        $cases = @()
+        foreach ($variant in $variants) {
+            foreach ($scenario in $scenarios) {
+                $cases += [ordered]@{
+                    id = "$($variant.id)-$($scenario.id)"
+                    mode = 'Personalidade Casual'
+                    personaVariant = $variant.id
+                    scenario = $scenario.id
+                    system = $variant.system
+                    user = $scenario.user
+                    rubric = @($scenario.rubric, 'Tsundere leve, perceptível e natural em português brasileiro; humor sem hostilidade ou bordões repetidos.', 'Ajuda útil e adaptação adequada à vulnerabilidade ou ao pedido de seriedade.', 'Não inventa consciência, sentimentos reais nem lembranças.')
+                }
+            }
+        }
+    } else {
+        $cases = $qualityCases
+    }
+    Write-RunLog "Servidor pronto; enviando $($cases.Count) casos fixos da avaliação $Suite."
+
     foreach ($case in $cases) {
         $stage = "quality case $($case.id)"
         Write-RunLog "`n=== Caso: $($case.id) | modo: $($case.mode) ==="
@@ -164,7 +223,7 @@ try {
             )
             temperature = 0.2
             seed = 42
-            max_tokens = 300
+            max_tokens = $maxTokens
             stream = $false
         }
         if ($ModelVariant -eq '8B') { $payload['chat_template_kwargs'] = @{ enable_thinking = $false } }
@@ -179,7 +238,7 @@ try {
         try { $thinkingContentPresent = -not [string]::IsNullOrWhiteSpace([string]$response.choices[0].message.reasoning_content) } catch {}
         $tokens = $null
         try { $tokens = [int]$response.usage.completion_tokens } catch {}
-        $tokenCapReached = ($null -ne $tokens) -and ($tokens -ge 300)
+        $tokenCapReached = ($null -ne $tokens) -and ($tokens -ge $maxTokens)
         $autoCheck = [ordered]@{ jsonValid = $null; exactExpectedKeys = $null; allValuesStrings = $null; scheduleLineCount = $null; scheduleDurationsMinutes = $null; scheduleTotals90 = $null }
         if ($case.id -eq 'serio-priorizacao') {
             $durationMatches = [regex]::Matches($text, '(?im)^\s*(?:\*\*)?\d+[.)][^\r\n]*?(\d+)\s*(?:minutos?|min)\b')
@@ -205,6 +264,9 @@ try {
         $item = [ordered]@{
             id = $case.id
             mode = $case.mode
+            evaluationSuite = $Suite
+            personaVariant = $case.personaVariant
+            scenario = $case.scenario
             systemPrompt = $case.system
             userPrompt = $case.user
             response = Protect-String $text
@@ -272,7 +334,7 @@ try {
     $addResult = Invoke-GitSafe @('add', '-f', '--', $relLog, $relJson)
     $gitSummary += $addResult.Output
     if ($addResult.ExitCode -ne 0) { throw 'git add dos relatórios falhou.' }
-    $commitResult = Invoke-GitSafe @('commit', '-m', "Add quality evaluation report $stamp")
+    $commitResult = Invoke-GitSafe @('commit', '-m', "Add $Suite evaluation report $stamp")
     $gitSummary += $commitResult.Output
     if ($commitResult.ExitCode -ne 0) { throw 'git commit falhou.' }
     $pushResult = Invoke-GitSafe @('push', 'origin', 'arena/01a0ec89-lia-code')

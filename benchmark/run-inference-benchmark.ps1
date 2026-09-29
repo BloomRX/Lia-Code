@@ -81,17 +81,19 @@ try {
     } else { Write-RunLog 'Modelo em cache reutilizado.' }
     if ((Get-Item -LiteralPath $modelPath).Length -lt 2.2GB) { throw 'O modelo tem menos de 2,2 GiB; download incompleto ou página de erro salva como arquivo. Apague o arquivo incompleto no cache e tente novamente.' }
 
+    $stage = 'enumerate Vulkan devices'
     Write-RunLog "`nDispositivos reportados pelo llama.cpp:"
-    $devices = @(& $cli.Source '--list-devices' 2>&1 | ForEach-Object { [string]$_ })
+    $devices = @(& $cli.FullName '--list-devices' 2>&1 | ForEach-Object { [string]$_ })
     $devices | ForEach-Object { Write-RunLog $_ }
     $report.deviceEnumeration = $devices
     $vulkanGpuFound = (($devices -join "`n") -match '(?i)Vulkan') -and (($devices -join "`n") -match '(?i)AMD|Radeon|RX 580')
 
     function Invoke-BenchCase([string]$Name, [int]$GpuLayers) {
+        $script:stage = "$Name benchmark"
         Write-RunLog "`n=== $Name (GPU layers: $GpuLayers) ==="
         $sw = [System.Diagnostics.Stopwatch]::StartNew()
         $benchArgs = @('-m', $modelPath, '-p', '256', '-n', '64', '-t', '6', '-r', '2', '-ngl', "$GpuLayers")
-        $output = @(& $bench.Source @benchArgs 2>&1 | ForEach-Object { $line = [string]$_; Write-RunLog $line; Protect-String $line })
+        $output = @(& $bench.FullName @benchArgs 2>&1 | ForEach-Object { $line = [string]$_; Write-RunLog $line; Protect-String $line })
         $exit = $LASTEXITCODE
         $sw.Stop()
         $report.tests += [ordered]@{ name = $Name; gpuLayers = $GpuLayers; exitCode = $exit; wallTimeSeconds = [math]::Round($sw.Elapsed.TotalSeconds, 2); rawOutput = $output }

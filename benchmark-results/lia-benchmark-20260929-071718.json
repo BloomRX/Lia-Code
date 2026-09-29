@@ -1,4 +1,4 @@
-﻿{
+{
     "schemaVersion":  1,
     "createdAt":  "2026-09-29T07:17:18.5918726-03:00",
     "machine":  {
@@ -14,7 +14,7 @@
                 },
     "software":  {
                      "powershell":  "5.1.26100.9444",
-                     "python":  "C:\\Users\\lucas\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+                     "python":  "%USERPROFILE%\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
                      "git":  "C:\\Program Files\\Git\\cmd\\git.exe",
                      "ollama":  null,
                      "dxdiag":  true

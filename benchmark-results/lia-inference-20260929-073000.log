@@ -1,10 +1,10 @@
-﻿**********************
+**********************
 Início da transcrição do Windows PowerShell
 Hora de início: 20260929073000
-Nome de Usuário: LUCASPC\lucas
-Executar como Usuário: LUCASPC\lucas
+Nome de Usuário: [redacted]
+Executar como Usuário: [redacted]
 Nome da Configuração: 
-Computador: LUCASPC (Microsoft Windows NT 10.0.26200.0)
+Computador: [redacted]
 Aplicativo Host: powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File J:\Lia-Code\benchmark\run-inference-benchmark.ps1
 ID do Processo: 2284
 PSVersion: 5.1.26100.9444
@@ -18,7 +18,7 @@ SerializationVersion: 1.1.0.1
 **********************
 Lia-Code - benchmark local de inferÃªncia
 Vai baixar um runtime Vulkan e um modelo GGUF (~2,5 GB para o modelo).
-Cache: C:\Users\lucas\AppData\Local\Lia-Code\benchmark-cache
+Cache: %USERPROFILE%\AppData\Local\Lia-Code\benchmark-cache
 EspaÃ§o livre no drive do cache: 214,0 GB
 Baixando llama.cpp b11249 (Vulkan)...
 Baixando modelo Qwen3-4B-Instruct-2507 Q4_K_M (~2,5 GB)...

@@ -1,10 +1,10 @@
-﻿**********************
+**********************
 Início da transcrição do Windows PowerShell
 Hora de início: 20260929071718
-Nome de Usuário: LUCASPC\lucas
-Executar como Usuário: LUCASPC\lucas
+Nome de Usuário: [redacted]
+Executar como Usuário: [redacted]
 Nome da Configuração: 
-Computador: LUCASPC (Microsoft Windows NT 10.0.26200.0)
+Computador: [redacted]
 Aplicativo Host: powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File J:\Lia-Code\benchmark\run-benchmark.ps1
 ID do Processo: 7132
 PSVersion: 5.1.26100.9444

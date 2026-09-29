@@ -18,7 +18,8 @@ $report = [ordered]@{
     notes = @()
 }
 
-Start-Transcript -Path $logPath -Force | Out-Null
+$rawLogPath = Join-Path $env:TEMP "lia-benchmark-raw-$stamp.log"
+Start-Transcript -Path $rawLogPath -Force | Out-Null
 try {
     Write-Host 'Lia-Code - diagnóstico inicial de benchmark' -ForegroundColor Cyan
     Write-Host 'Nenhum modelo será baixado ou instalado.'
@@ -57,9 +58,9 @@ try {
     $ollama = Get-Command ollama -ErrorAction SilentlyContinue
     $report.software = [ordered]@{
         powershell = $PSVersionTable.PSVersion.ToString()
-        python = if ($python) { $python.Source } else { $null }
-        git = if ($git) { $git.Source } else { $null }
-        ollama = if ($ollama) { $ollama.Source } else { $null }
+        pythonDetected = [bool]$python
+        gitDetected = [bool]$git
+        ollamaDetected = [bool]$ollama
         dxdiag = Test-Path "$env:WINDIR\System32\dxdiag.exe"
     }
 
@@ -84,7 +85,7 @@ try {
     $foundLlama = @{}
     foreach ($name in $llamaCommands) {
         $cmd = Get-Command $name -ErrorAction SilentlyContinue
-        $foundLlama[$name] = if ($cmd) { $cmd.Source } else { $null }
+        $foundLlama[$name] = [bool]$cmd
     }
     $report.runtimes.llamaCpp = $foundLlama
     if (-not ($foundLlama.Values | Where-Object { $_ })) {
@@ -112,6 +113,14 @@ try {
         } catch {}
     }
     Stop-Transcript | Out-Null
+    try {
+        $safeLog = Get-Content -LiteralPath $rawLogPath -Raw
+        if ($env:USERPROFILE) { $safeLog = [regex]::Replace($safeLog, [regex]::Escape($env:USERPROFILE), '%USERPROFILE%', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase) }
+        if ($env:COMPUTERNAME) { $safeLog = [regex]::Replace($safeLog, [regex]::Escape($env:COMPUTERNAME), '[redacted-host]', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase) }
+        $safeLog = [regex]::Replace($safeLog, '(?m)^(Nome de Usuário|Executar como Usuário):.*$', '$1: [redacted]')
+        $safeLog = [regex]::Replace($safeLog, '(?m)^Computador:.*$', 'Computador: [redacted]')
+        Set-Content -LiteralPath $logPath -Value $safeLog -Encoding UTF8
+    } finally { Remove-Item -LiteralPath $rawLogPath -Force -ErrorAction SilentlyContinue }
 }
 
 # Submit only these generated report files, and only from the session's designated branch.

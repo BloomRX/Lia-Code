@@ -24,6 +24,6 @@ Execute `benchmark/Update-and-Run-Lia-Benchmark.bat`. Ele valida que o clone est
 
 O teste roda `llama-bench` com parâmetros fixos (256 tokens de prompt, até 64 tokens gerados, 6 threads, 2 repetições): primeiro CPU (`-ngl 0`), depois tenta Vulkan na RX AMD se o runtime a detectar. Registra saída bruta, duração e erros. Isso mede throughput, não qualidade de respostas nem consumo de VRAM com precisão; se Vulkan não reconhecer a placa, o benchmark CPU ainda é guardado e enviado.
 
-Ao terminar, tenta fazer commit e push apenas dos dois relatórios de inferência para `origin/arena/01a0ec89-lia-code`. O processo para se estiver em outra branch ou se houver alterações staged, para evitar incluir outros arquivos. Requer Git autenticado no Windows. Se push falhar, os resultados continuam em `benchmark-results/`.
+Ao terminar, tenta fazer commit e push apenas dos dois relatórios de inferência para `origin/arena/01a0ec89-lia-code`. O processo para se estiver em outra branch ou se houver alterações staged, para evitar incluir outros arquivos. Requer Git autenticado no Windows. Se push falhar, os resultados continuam em `benchmark-results/`. Os logs desta fase não usam cabeçalho de transcrição do PowerShell e substituem o caminho do perfil por `%USERPROFILE%` para evitar publicar o usuário do Windows.
 
 A linha de comando de atualização automática é limitada a `git pull --ff-only origin arena/01a0ec89-lia-code`; se houver divergência ou alterações que impeçam o avanço seguro, ela para sem sobrescrever arquivos.

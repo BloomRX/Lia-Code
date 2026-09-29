@@ -180,7 +180,16 @@ try {
         $tokens = $null
         try { $tokens = [int]$response.usage.completion_tokens } catch {}
         $tokenCapReached = ($null -ne $tokens) -and ($tokens -ge 300)
-        $autoCheck = [ordered]@{ jsonValid = $null; exactExpectedKeys = $null; allValuesStrings = $null }
+        $autoCheck = [ordered]@{ jsonValid = $null; exactExpectedKeys = $null; allValuesStrings = $null; scheduleLineCount = $null; scheduleDurationsMinutes = $null; scheduleTotals90 = $null }
+        if ($case.id -eq 'serio-priorizacao') {
+            $durationMatches = [regex]::Matches($text, '(?im)^\s*(?:\*\*)?\d+[.)][^\r\n]*?(\d+)\s*(?:minutos?|min)\b')
+            $durations = @($durationMatches | ForEach-Object { [int]$_.Groups[1].Value })
+            $sum = 0
+            if ($durations.Count -gt 0) { $sum = ($durations | Measure-Object -Sum).Sum }
+            $autoCheck.scheduleLineCount = $durationMatches.Count
+            $autoCheck.scheduleDurationsMinutes = $durations
+            $autoCheck.scheduleTotals90 = ($durationMatches.Count -eq 4 -and $sum -eq 90)
+        }
         if ($case.id -eq 'json-instructions') {
             try {
                 $parsed = ConvertFrom-Json -InputObject $text -ErrorAction Stop
@@ -213,6 +222,7 @@ try {
         Write-RunLog ("Tempo: {0:N2}s | tokens reportados: {1} | finish: {2} | limite atingido: {3} | resposta vazia: {4} | canal de raciocínio presente: {5}" -f $item.elapsedSeconds, $tokens, $finishReason, $tokenCapReached, $item.emptyResponse, $thinkingContentPresent)
         Write-RunLog 'Resposta:'
         Write-RunLog $text
+        if ($case.id -eq 'serio-priorizacao') { Write-RunLog "Linhas de agenda com minutos: $($autoCheck.scheduleLineCount); durações: $($autoCheck.scheduleDurationsMinutes -join ', '); soma 90: $($autoCheck.scheduleTotals90)" }
         if ($case.id -eq 'json-instructions') { Write-RunLog "JSON parseável: $($autoCheck.jsonValid); chaves exatas: $($autoCheck.exactExpectedKeys); valores string: $($autoCheck.allValuesStrings)" }
     }
     $report.notes += 'Servidor parado ao final; API ficou vinculada somente ao loopback 127.0.0.1.'

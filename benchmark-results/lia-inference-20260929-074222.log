@@ -1,0 +1,8 @@
+Lia-Code inference benchmark | 20260929-074222
+Lia-Code - benchmark local de inferência
+Vai baixar um runtime Vulkan e um modelo GGUF (~2,5 GB para o modelo).
+Cache: %USERPROFILE%\AppData\Local\Lia-Code\benchmark-cache
+Espaço livre no drive do cache: 213,9 GB
+Runtime em cache reutilizado.
+Baixando modelo Qwen3-4B-Instruct-2507 Q4_K_M (~2,5 GB)...
+ERRO: O servidor remoto retornou um erro: (404) Não Localizado.

@@ -1,0 +1,125 @@
+﻿{
+    "schemaVersion":  1,
+    "evaluation":  "piper-faber-cpu-vs-directml-latency",
+    "createdAt":  "2026-09-30T11:22:24.3369209-03:00",
+    "machine":  {
+                    "os":  "Microsoft Windows 11 Home",
+                    "osBuild":  "26200",
+                    "powershellVersion":  "5.1.26100.9444",
+                    "culture":  "pt-BR"
+                },
+    "policy":  "Create two removable environments outside the repository; CPU environment reuses the existing CPU ONNX Runtime through system-site-packages. Download pinned Piper Faber weights and package wheels; do not change system Python or install globally.",
+    "resourceRoot":  "%LOCALAPPDATA%\\Lia-Code\\tts\\piper-directml-eval",
+    "resources":  {
+                      "voiceModel":  {
+                                         "path":  "%LOCALAPPDATA%\\Lia-Code\\tts\\piper-directml-eval\\models\\faber-medium\\pt_BR-faber-medium.onnx",
+                                         "origin":  "https://huggingface.co/rhasspy/piper-voices/resolve/2f8dbe0bb0dde986411632bf014a13cdbe6596e7/pt/pt_BR/faber/medium/pt_BR-faber-medium.onnx?download=true",
+                                         "repositoryRevision":  "2f8dbe0bb0dde986411632bf014a13cdbe6596e7",
+                                         "sha256":  "858555e3a064209c57088fe6bd70c4c3dc54d03eaa00c45d5ecaf43a33f95aa7",
+                                         "sizeBytes":  63201294,
+                                         "license":  "Upstream model card attributes CC0 to the dataset but does not clearly state a separate license for this exact weight. Local evaluation only; do not redistribute pending clarification."
+                                     },
+                      "voiceConfig":  {
+                                          "origin":  "https://huggingface.co/rhasspy/piper-voices/resolve/2f8dbe0bb0dde986411632bf014a13cdbe6596e7/pt/pt_BR/faber/medium/pt_BR-faber-medium.onnx.json?download=true",
+                                          "sha256":  "b65310a5c057a8f99d6942f41cbb8a0a88670fc794f2c99a8dc0ce7a5cdf4a89",
+                                          "sizeBytes":  6819
+                                      },
+                      "piperWheel":  {
+                                         "path":  "%LOCALAPPDATA%\\Lia-Code\\tts\\piper-directml-eval\\piper_tts-1.8.0-cp39-abi3-win_amd64.whl",
+                                         "origin":  "https://files.pythonhosted.org/packages/12/9c/c736d1961cf9ce0655278731b9430df41892ca2ded7b09dabcb340612158/piper_tts-1.8.0-cp39-abi3-win_amd64.whl",
+                                         "version":  "1.8.0",
+                                         "sha256":  "5da9bfdb05dfe15da3536859d422e605483ffa6d2b3ec2c5b9593bae6b5aa6a4",
+                                         "license":  "GPL-3.0-or-later; wheel includes Piper/eSpeak phonemization components."
+                                     },
+                      "directmlWheel":  {
+                                            "path":  "%LOCALAPPDATA%\\Lia-Code\\tts\\piper-directml-eval\\onnxruntime_directml-1.24.4-cp314-cp314-win_amd64.whl",
+                                            "origin":  "https://files.pythonhosted.org/packages/b7/04/816932a3ade867a687e406716ca76e0774c6b921545b45818e3ebfcc54ce/onnxruntime_directml-1.24.4-cp314-cp314-win_amd64.whl",
+                                            "version":  "1.24.4",
+                                            "sha256":  "51d86bb949488e572b00422f344990a4a81d982416d73b6c0e4ced2bcd423d19",
+                                            "license":  "MIT"
+                                        },
+                      "deletion":  "Delete %LOCALAPPDATA%\\Lia-Code\\tts\\piper-directml-eval to remove both venvs, model, downloaded wheels, pip cache, profiles and WAV outputs. The system Python/CPU ONNX Runtime is not modified.",
+                      "packageInventories":  [
+                                                 "cpu-package-inventory.json",
+                                                 "directml-package-inventory.json"
+                                             ]
+                  },
+    "cpu":  {
+                "setup":  "ok",
+                "result":  {
+                               "providerRequested":  [
+                                                         "CPUExecutionProvider"
+                                                     ],
+                               "providersActive":  [
+                                                       "CPUExecutionProvider"
+                                                   ],
+                               "pythonOnnxRuntimeVersion":  "1.24.4",
+                               "modelLoadSeconds":  1.980146000001696,
+                               "sampleRate":  22050,
+                               "runsPerText":  4,
+                               "texts":  {
+                                             "short":  {
+                                                           "firstAudioMedianSeconds":  0.08050534999983938,
+                                                           "totalMedianSeconds":  0.2969475499994587,
+                                                           "audioDurationSeconds":  2.7341496598639456,
+                                                           "realTimeFactorMedian":  0.10860691144984183,
+                                                           "wav":  "faber-cpu-short.wav"
+                                                       },
+                                             "paragraph":  {
+                                                               "firstAudioMedianSeconds":  0.0887341000006927,
+                                                               "totalMedianSeconds":  1.4944233500000337,
+                                                               "audioDurationSeconds":  20.67156462585034,
+                                                               "realTimeFactorMedian":  0.07229367380015432,
+                                                               "wav":  "faber-cpu-paragraph.wav"
+                                                           }
+                                         },
+                               "sessionProfile":  "ort-cpu_2026-09-30_11-23-37.json",
+                               "nodeProvidersObserved":  [
+                                                             "CPUExecutionProvider"
+                                                         ],
+                               "gpuExecutionConfirmed":  false
+                           }
+            },
+    "directml":  {
+                     "setup":  "ok",
+                     "result":  {
+                                    "providerRequested":  [
+                                                              "DmlExecutionProvider",
+                                                              "CPUExecutionProvider"
+                                                          ],
+                                    "providersActive":  [
+                                                            "DmlExecutionProvider",
+                                                            "CPUExecutionProvider"
+                                                        ],
+                                    "pythonOnnxRuntimeVersion":  "1.24.4",
+                                    "modelLoadSeconds":  2.3890540000011242,
+                                    "sampleRate":  22050,
+                                    "runsPerText":  4,
+                                    "texts":  {
+                                                  "short":  {
+                                                                "firstAudioMedianSeconds":  0.1376604999995834,
+                                                                "totalMedianSeconds":  0.6521732499995778,
+                                                                "audioDurationSeconds":  2.6877097505668934,
+                                                                "realTimeFactorMedian":  0.24265017822777218,
+                                                                "wav":  "faber-directml-short.wav"
+                                                            },
+                                                  "paragraph":  {
+                                                                    "firstAudioMedianSeconds":  0.21954174999973475,
+                                                                    "totalMedianSeconds":  1.1552364499993928,
+                                                                    "audioDurationSeconds":  20.67156462585034,
+                                                                    "realTimeFactorMedian":  0.055885293199080775,
+                                                                    "wav":  "faber-directml-paragraph.wav"
+                                                                }
+                                              },
+                                    "sessionProfile":  "ort-directml_2026-09-30_11-23-53.json",
+                                    "nodeProvidersObserved":  [
+                                                                  "CPUExecutionProvider",
+                                                                  "DmlExecutionProvider"
+                                                              ],
+                                    "gpuExecutionConfirmed":  true
+                                }
+                 },
+    "issues":  [
+
+               ]
+}

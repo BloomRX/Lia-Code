@@ -1,0 +1,6 @@
+﻿Lia-Code — preflight TTS de voz SAPI já instalada; sem downloads nem instalações.
+Sistema: Microsoft Windows 11 Home | PowerShell: 5.1.26100.9444
+Vozes SAPI disponíveis: 2
+Voz: Microsoft Maria Desktop | pt-BR | habilitada=True
+Voz: Microsoft Zira Desktop | en-US | habilitada=True
+Áudio gerado localmente: %LOCALAPPDATA%\Lia-Code\benchmark-cache\tts\lia-sapi-ptbr-20260930-091635.wav (860206 bytes)

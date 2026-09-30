@@ -1,4 +1,4 @@
-﻿$ErrorActionPreference = 'Stop'
+$ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
 $OutputEncoding = [Console]::OutputEncoding
@@ -90,6 +90,10 @@ if modules["onnxruntime"]:
         result["probeError"] = "onnxruntime provider query failed: " + type(exc).__name__
 print(json.dumps(result, ensure_ascii=False))
 '@
+    # Windows PowerShell 5.1 strips embedded quotes from native -c arguments.
+    # Pass the probe as base64 and use a quote-free Python bootstrap instead.
+    $encodedProbe = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($probeCode))
+    $pythonRunner = 'exec(__import__(chr(98)+chr(97)+chr(115)+chr(101)+chr(54)+chr(52)).b64decode(__import__(chr(115)+chr(121)+chr(115)).argv[1]))'
     $nativeOutput = @()
     $nativeExitCode = $null
     $previousErrorActionPreference = $ErrorActionPreference
@@ -97,11 +101,11 @@ print(json.dumps(result, ensure_ascii=False))
     try {
         if ($pythonCommand) {
             $report.python.executableAvailable = $true
-            $nativeOutput = @(& $pythonCommand.Source -B -c $probeCode 2>&1 | ForEach-Object { [string]$_ })
+            $nativeOutput = @(& $pythonCommand.Source -B -c $pythonRunner $encodedProbe 2>&1 | ForEach-Object { [string]$_ })
             $nativeExitCode = $LASTEXITCODE
         } elseif ($pythonLauncher) {
             $report.python.executableAvailable = $true
-            $nativeOutput = @(& $pythonLauncher.Source -3 -B -c $probeCode 2>&1 | ForEach-Object { [string]$_ })
+            $nativeOutput = @(& $pythonLauncher.Source -3 -B -c $pythonRunner $encodedProbe 2>&1 | ForEach-Object { [string]$_ })
             $nativeExitCode = $LASTEXITCODE
         }
     } finally {

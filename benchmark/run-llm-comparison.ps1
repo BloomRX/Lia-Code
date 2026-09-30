@@ -16,13 +16,14 @@ $report = [ordered]@{
     schemaVersion = 1
     evaluation = 'cached-cross-family-llm-comparison'
     createdAt = (Get-Date).ToString('o')
-    policy = 'Use cached models only; no download or installation is performed.'
+    policy = 'Compare cached models. The specifically authorized Phi-4-mini Q4_K_M download may be fetched with a pinned revision and SHA256 if absent; no software/runtime is installed or updated.'
     machine = [ordered]@{}
     runtime = [ordered]@{}
     candidates = @()
+    externalResources = @()
     notes = @(
         'This is a text-only screening. Human review is required; the script does not choose a winner automatically.',
-        'Model files are selected by filename from the Lia-Code cache. No files are removed or modified.',
+        'No existing model or runtime is deleted or modified. Only the authorized Phi-4-mini quantization may be added to the external model cache.',
         'GPU device enumeration and startup logs are evidence, not a measurement of peak VRAM under inference.'
     )
 }
@@ -95,11 +96,21 @@ $definitions = @(
     [ordered]@{ family = 'Granite-3.3-2B-Instruct'; pattern = '(?i)granite[-_. ]?3[._-]?3[-_. ]?2b.*\.gguf$'; license = 'Apache-2.0'; repo = 'ibm-granite/granite-3.3-2b-instruct'; role = 'alternativa compacta, texto' },
     [ordered]@{ family = 'Mistral-7B-Instruct-v0.3'; pattern = '(?i)mistral.*7b.*instruct.*\.gguf$'; license = 'Apache-2.0'; repo = 'mistralai/Mistral-7B-Instruct-v0.3'; role = 'alternativa maior, texto' }
 )
+$phiDownload = [ordered]@{
+    fileName = 'microsoft_Phi-4-mini-instruct-Q4_K_M.gguf'
+    url = 'https://huggingface.co/bartowski/microsoft_Phi-4-mini-instruct-GGUF/resolve/915429cb42fe8eba71bd1d3117a7d63070892268/microsoft_Phi-4-mini-instruct-Q4_K_M.gguf?download=true'
+    revision = '915429cb42fe8eba71bd1d3117a7d63070892268'
+    sha256 = '01999f17c39cc3074afae5e9c539bc82d45f2dd7faa3917c66cbef76fce8c0c2'
+    license = 'MIT (upstream Microsoft Phi-4-mini-instruct)'
+    sourceRepository = 'bartowski/microsoft_Phi-4-mini-instruct-GGUF'
+}
+$phiDownloadStatus = 'not-needed'
+$phiDownloadError = $null
 
 $serverProc = $null
 try {
-    Write-RunLog 'Lia-Code — comparação local de LLMs em cache; sem downloads/instalações.'
-    if (-not (Test-Path -LiteralPath $modelCache)) { throw 'Cache de modelos Lia-Code não existe; encerrando sem baixar nada.' }
+    Write-RunLog 'Lia-Code — comparação LLM local; usa cache e baixa apenas o Phi-4-mini autorizado se estiver ausente. Não instala ou atualiza software.'
+    New-Item -ItemType Directory -Force -Path $modelCache | Out-Null
     $os = Get-CimInstance Win32_OperatingSystem -ErrorAction Stop
     $cpu = Get-CimInstance Win32_Processor -ErrorAction Stop | Select-Object -First 1
     $computer = Get-CimInstance Win32_ComputerSystem -ErrorAction Stop
@@ -144,7 +155,66 @@ try {
         deviceEnumerationOnly = $true
     }
 
-    $allModels = @(Get-ChildItem -LiteralPath $modelCache -Filter '*.gguf' -File -Recurse -ErrorAction SilentlyContinue)
+    $phiPath = Join-Path $modelCache $phiDownload.fileName
+    if (Test-Path -LiteralPath $phiPath) {
+        $existingPhiHash = (Get-FileHash -LiteralPath $phiPath -Algorithm SHA256).Hash.ToLowerInvariant()
+        if ($existingPhiHash -eq $phiDownload.sha256) {
+            $phiDownloadStatus = 'already-present-and-verified'
+            $phiItem = Get-Item -LiteralPath $phiPath
+            $report.externalResources += [ordered]@{
+                name = $phiDownload.fileName
+                type = 'GGUF model weights, Q4_K_M'
+                path = '%LOCALAPPDATA%\Lia-Code\benchmark-cache\models\microsoft_Phi-4-mini-instruct-Q4_K_M.gguf'
+                sizeBytes = $phiItem.Length
+                sha256 = $existingPhiHash
+                license = $phiDownload.license
+                sourceRepository = $phiDownload.sourceRepository
+                revision = $phiDownload.revision
+                status = $phiDownloadStatus
+                cleanup = 'Delete only this file after the project no longer needs it.'
+            }
+        } else {
+            $phiDownloadStatus = 'existing-file-hash-mismatch; preserved'
+            $phiDownloadError = 'The managed Phi GGUF path exists but its SHA256 differs from the approved artifact; it was not changed or loaded.'
+            Write-RunLog 'Phi-4-mini encontrado com hash diferente; preservado e excluído desta avaliação.'
+        }
+    } else {
+        $partialPhiPath = Join-Path $modelCache ("$($phiDownload.fileName).partial-$stamp")
+        try {
+            $cacheDrive = [System.IO.DriveInfo]::new([System.IO.Path]::GetPathRoot($modelCache))
+            if ($cacheDrive.AvailableFreeSpace -lt 3GB) { throw 'São necessários pelo menos 3 GiB livres no cache para o arquivo de pesos autorizado.' }
+            Write-RunLog 'Baixando somente Phi-4-mini-instruct Q4_K_M, autorizado pelo usuário (aprox. 2,49 GB), para o cache externo...'
+            Invoke-WebRequest -Uri $phiDownload.url -OutFile $partialPhiPath -UseBasicParsing | Out-Null
+            $downloadedPhi = Get-Item -LiteralPath $partialPhiPath
+            if ($downloadedPhi.Length -lt 2GB) { throw 'O arquivo baixado é menor que 2 GiB; não será aceito no cache.' }
+            $downloadedHash = (Get-FileHash -LiteralPath $partialPhiPath -Algorithm SHA256).Hash.ToLowerInvariant()
+            if ($downloadedHash -ne $phiDownload.sha256) { throw 'SHA256 não confere com o artefato aprovado; download rejeitado.' }
+            Move-Item -LiteralPath $partialPhiPath -Destination $phiPath -NoClobber -ErrorAction Stop
+            $phiDownloadStatus = 'downloaded-and-sha256-verified'
+            $phiItem = Get-Item -LiteralPath $phiPath
+            $report.externalResources += [ordered]@{
+                name = $phiDownload.fileName
+                type = 'GGUF model weights, Q4_K_M'
+                path = '%LOCALAPPDATA%\Lia-Code\benchmark-cache\models\microsoft_Phi-4-mini-instruct-Q4_K_M.gguf'
+                sizeBytes = $phiItem.Length
+                sha256 = $downloadedHash
+                license = $phiDownload.license
+                sourceRepository = $phiDownload.sourceRepository
+                revision = $phiDownload.revision
+                status = $phiDownloadStatus
+                cleanup = 'Delete only this file after the project no longer needs it.'
+            }
+            Write-RunLog "Phi-4-mini baixado e SHA256 validado; caminho: %LOCALAPPDATA%\Lia-Code\benchmark-cache\models\$($phiDownload.fileName)"
+        } catch {
+            $phiDownloadStatus = 'download-failed-or-hash-rejected'
+            $phiDownloadError = Protect-Text ([string]$_.Exception.Message)
+            Write-RunLog "Download Phi-4-mini falhou: $phiDownloadError"
+        } finally {
+            if (Test-Path -LiteralPath $partialPhiPath) { Remove-Item -LiteralPath $partialPhiPath -Force -ErrorAction SilentlyContinue }
+        }
+    }
+
+    $allModels = @(Get-ChildItem -LiteralPath $modelCache -Filter '*.gguf' -File -Recurse -ErrorAction SilentlyContinue | Where-Object { -not ($phiDownloadStatus -eq 'existing-file-hash-mismatch; preserved' -and $_.FullName -eq $phiPath) })
     foreach ($definition in $definitions) {
         $match = $allModels | Where-Object { $_.Name -match $definition.pattern } |
             Sort-Object @{ Expression = { if ($_.Name -match '(?i)Q4_K_M') { 0 } else { 1 } } }, @{ Expression = { $_.Length } } |
@@ -152,10 +222,14 @@ try {
         $cachedFileName = $null
         $cachedSizeGiB = $null
         $initialResult = 'not-cached; skipped without download'
+        $initialError = $null
         if ($match) {
             $cachedFileName = $match.Name
             $cachedSizeGiB = [math]::Round($match.Length / 1GB, 2)
             $initialResult = 'pending'
+        } elseif ($definition.family -eq 'Phi-4-mini-instruct' -and $phiDownloadError) {
+            $initialResult = $phiDownloadStatus
+            $initialError = $phiDownloadError
         }
         $candidate = [ordered]@{
             family = $definition.family
@@ -169,11 +243,12 @@ try {
             memoryPreflight = $null
             cases = @()
             startupEvidence = @()
-            error = $null
+            error = $initialError
         }
         $report.candidates += $candidate
         if (-not $match) {
-            Write-RunLog "SKIP $($definition.family): nenhum GGUF correspondente no cache; nada será baixado."
+            if ($initialError) { Write-RunLog "SKIP $($definition.family): $initialError" }
+            else { Write-RunLog "SKIP $($definition.family): nenhum GGUF correspondente no cache; sem download autorizado para essa família." }
             continue
         }
 
@@ -281,17 +356,17 @@ try {
                     Write-RunLog (Protect-Text $text)
                     if ($case.id -in @('planejamento-com-restricoes','json-exato')) { Write-RunLog ("Checagens: " + ($candidateResult.automaticChecks | ConvertTo-Json -Compress)) }
                 } catch {
-                    $candidateResult.error = $_.Exception.Message
+                    $candidateResult.error = Protect-Text ([string]$_.Exception.Message)
                     $candidate.result = 'partial-inference-error'
-                    $issues.Add("$($definition.family)/$($case.id): $($_.Exception.Message)")
+                    $issues.Add("$($definition.family)/$($case.id): $(Protect-Text ([string]$_.Exception.Message))")
                     Write-RunLog "ERRO $($definition.family)/$($case.id): $($_.Exception.Message)"
                 }
                 $candidate.cases += $candidateResult
             }
         } catch {
             $candidate.result = 'load-or-inference-failed'
-            $candidate.error = $_.Exception.Message
-            $issues.Add("$($definition.family): $($_.Exception.Message)")
+            $candidate.error = Protect-Text ([string]$_.Exception.Message)
+            $issues.Add("$($definition.family): $(Protect-Text ([string]$_.Exception.Message))")
             Write-RunLog "ERRO $($definition.family): $($_.Exception.Message)"
         } finally {
             if ($serverProc) {
@@ -308,11 +383,11 @@ try {
         }
     }
     $ran = @($report.candidates | Where-Object { $_.result -eq 'tested' -and $_.cases.Count -gt 0 }).Count
-    if ($ran -eq 0) { $report.notes += 'Nenhum candidato em cache pôde ser avaliado. O relatório lista o que falta; não foi feito download.' }
+    if ($ran -eq 0) { $report.notes += 'Nenhum candidato foi avaliado. O relatório lista a situação do Phi autorizado e dos demais recursos; nenhum runtime foi instalado.' }
     $report.notes += 'As medições de tempo são de ponta a ponta por prompt e variam com carga do sistema. Revisar manualmente todas as respostas antes de escolher o LLM-base.'
 } catch {
-    $issues.Add($_.Exception.Message)
-    $report.notes += "Preflight/evaluation error: $($_.Exception.Message)"
+    $issues.Add((Protect-Text ([string]$_.Exception.Message)))
+    $report.notes += "Preflight/evaluation error: $(Protect-Text ([string]$_.Exception.Message))"
     Write-RunLog "ERRO: $($_.Exception.Message)"
 } finally {
     if ($serverProc) {
@@ -340,7 +415,7 @@ try {
     & git push origin arena/01a0ec89-lia-code
     if ($LASTEXITCODE -ne 0) { throw 'git push dos relatórios falhou; eles permanecem locais.' }
     $gitSummary.Add('Relatórios commitados e enviados para arena/01a0ec89-lia-code.')
-} catch { $gitSummary.Add("Envio automático não concluído: $($_.Exception.Message)") }
+} catch { $gitSummary.Add("Envio automático não concluído: $(Protect-Text ([string]$_.Exception.Message))") }
 finally { if ($pushedLocation) { Pop-Location } }
 Write-Host ($gitSummary -join [Environment]::NewLine)
 if ($issues.Count -gt 0 -or ($gitSummary -join ' ') -notmatch 'Relatórios commitados e enviados') { exit 1 }

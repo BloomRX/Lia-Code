@@ -8,4 +8,4 @@ Escolher primeiro um LLM-base local por comparação de qualidade e recursos, an
 
 ## Benchmarks atuais
 
-Os testes e launchers ficam documentados em [`benchmark/README.md`](benchmark/README.md). `Update-Lia.bat` na raiz compara LLMs de texto de diferentes famílias que já estejam em cache, sem downloads; o preflight Omni fica como modo explícito. A bateria de personalidade está pausada enquanto aguardamos referências para personas múltiplas.
+Os testes e launchers ficam documentados em [`benchmark/README.md`](benchmark/README.md). `Update-Lia.bat` na raiz compara LLMs de texto de diferentes famílias; apenas pesos autorizados/registrados podem ser baixados ao cache externo. Consulte [`docs/RESOURCE-REGISTRY.md`](docs/RESOURCE-REGISTRY.md) para removê-los depois. O preflight Omni fica como modo explícito. A bateria de personalidade está pausada enquanto aguardamos referências para personas múltiplas.

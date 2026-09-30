@@ -20,19 +20,20 @@ Motivo para começar modular: o alvo atual é uma RX 580 com 8 GB de VRAM. Como 
 ## Restrições permanentes do usuário
 
 - Preferir ferramentas e pesos gratuitos; verificar licenças de modelo, runtime, conversões e dados antes de usar.
-- Pedir confirmação antes de downloads grandes ou instalações adicionais.
+- O usuário autorizou downloads de modelos escolhidos pelo agente, desde que cada recurso externo seja registrado com caminho para remoção. Não instalar ou atualizar software/runtimes sem confirmação.
 - Manter pesos, runtimes e caches fora do repositório.
 - Não trocar de branch: todo trabalho nesta sessão fica em `arena/01a0ec89-lia-code`.
 - A raiz deve manter apenas `Update-Lia.bat` como launcher de benchmark; demais launchers ficam organizados em `benchmark/`.
-- `Update-Lia.bat` sem argumentos roda a comparação textual entre candidatos LLM já encontrados no cache, sem downloads/instalações; o preflight Omni permanece disponível como modo explícito. A comparação antiga 4B/8B e os testes isolados permanecem disponíveis. Não reativar a bateria de personalidade por padrão sem pedido do usuário.
+- `Update-Lia.bat` sem argumentos roda a comparação textual cross-family. Pode baixar apenas pesos aprovados/registrados (atualmente Phi-4-mini Q4_K_M) ao cache externo; nunca instala/atualiza runtime. O preflight Omni permanece disponível como modo explícito. A comparação antiga 4B/8B e testes isolados permanecem disponíveis; personalidade não roda por padrão.
 
 ## Estado conhecido
 
 - Qwen3-4B e Qwen3-8B foram comparados em quatro casos de texto; ambos completaram, com verificações de agenda/JSON aprovadas. Não houve vantagem qualitativa decisiva do 8B; usar 4B como baseline textual por menor exigência de VRAM, sem declarar modelo final.
-- Os relatórios não confirmaram quantas camadas foram efetivamente executadas na GPU (`serverStartupEvidence` estava vazio).
+- No teste cross-family 2026-09-29, somente Qwen3-4B estava disponível e foi executado. Phi/Granite/Mistral estavam ausentes; Qwen3-8B foi pulado por memória RAM livre insuficiente com Chrome aberto. Qwen3-4B produziu código/JSON corretos e não inventou dados, mas falhou na alocação de 90 minutos. A captura de logs de inicialização não trouxe evidência de offload GPU; o prompt de agenda e filtro de logs foram corrigidos para a próxima rodada.
+- Os relatórios até agora não confirmaram quantas camadas foram efetivamente executadas na GPU (`startupEvidence` vazio).
 - Testes de prompt Tsundere, até `prompt-v6-examples`, não produziram personalidade confiável. A resposta de autenticação ficou mais segura, mas o estilo continuou inconsistente. A bateria está preservada como opcional; aguardar a lista de personas do usuário antes de retomar.
 - O usuário planeja fornecer personagens de anime para investigar personas múltiplas. Ao retomar, usar perfis comportamentais e exemplos com origem/licença clara; não presumir que dados de diálogo raspados estejam liberados.
 
 ## Próximo marco
 
-O próximo teste único é `Update-Lia.bat` sem argumentos: comparar, usando apenas GGUFs já em cache, candidatos LLM de mais de uma família (Qwen3 como referência, Phi-4-mini, Granite 3.3-2B e Mistral 7B quando disponíveis). O teste não baixa pesos nem instala runtimes; candidatos ausentes ou não suportados são registrados e ignorados. Usar o relatório e a revisão humana das respostas para selecionar a base textual antes de retomar a validação das outras modalidades. Pedir confirmação antes de baixar pesos ou instalar/atualizar ferramentas. O roteiro está em [`docs/OMNI-ROADMAP.md`](docs/OMNI-ROADMAP.md).
+O próximo teste único é `Update-Lia.bat` sem argumentos: baixar apenas o Phi-4-mini-instruct Q4_K_M autorizado, se ainda ausente, verificar SHA-256 e comparar com o Qwen3-4B já em cache. O caminho, licença, origem e checksum ficam em [`docs/RESOURCE-REGISTRY.md`](docs/RESOURCE-REGISTRY.md) para exclusão posterior. Não instalar/atualizar runtimes; registrar e ignorar os outros candidatos sem cache. O roteiro está em [`docs/OMNI-ROADMAP.md`](docs/OMNI-ROADMAP.md).

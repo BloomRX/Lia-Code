@@ -24,7 +24,7 @@ Motivo para começar modular: o alvo atual é uma RX 580 com 8 GB de VRAM. Como 
 - Manter pesos, runtimes e caches fora do repositório.
 - Não trocar de branch: todo trabalho nesta sessão fica em `arena/01a0ec89-lia-code`.
 - A raiz deve manter apenas `Update-Lia.bat` como launcher de benchmark; demais launchers ficam organizados em `benchmark/`.
-- `Update-Lia.bat` sem argumentos roda a comparação textual cross-family. Pode baixar apenas pesos aprovados/registrados (atualmente Phi-4-mini Q4_K_M) ao cache externo; nunca instala/atualiza runtime. O preflight Omni permanece disponível como modo explícito. A comparação antiga 4B/8B e testes isolados permanecem disponíveis; personalidade não roda por padrão.
+- `Update-Lia.bat` sem argumentos roda um diagnóstico curto do Qwen3-4B no runtime existente, com logging verbose e sem baixar pesos; nunca instala/atualiza runtime. A comparação cross-family continua disponível no modo explícito. O preflight Omni permanece como modo explícito, e personalidade não roda por padrão.
 
 ## Estado conhecido
 
@@ -32,11 +32,10 @@ Motivo para começar modular: o alvo atual é uma RX 580 com 8 GB de VRAM. Como 
 - Na comparação cross-family de 2026-09-30, Qwen3-4B e 8B passaram código/JSON e não inventaram contexto. Ambos somaram 90 minutos na agenda com quatro itens numerados: 4B deu prioridade mais coerente (15/20/30/25); 8B também foi razoável (20/30/30/10). Não houve vantagem clara do 8B.
 - A rodada `20260930-082728` testou Qwen3-4B e Phi-4-mini; Qwen3-8B foi pulado porque Chrome estava aberto. Qwen3-4B passou agenda (15/20/30/25), Python, JSON e não invenção de contexto. Phi falhou agenda (30+25+40+45, sem unidade; total 140) e Python inválido; JSON e não-invenção passaram. Phi SWA estava desativado.
 - Phi-4-mini Q4_K_M foi baixado para `%LOCALAPPDATA%\Lia-Code\benchmark-cache\models\microsoft_Phi-4-mini-instruct-Q4_K_M.gguf`, SHA-256 verificado e registrado em `docs/RESOURCE-REGISTRY.md`.
-- Os logs de ambas as rodadas só dizem `model loaded`, sem camadas/buffers Vulkan; o uso efetivo da GPU ainda não está comprovado. Não instalar/atualizar runtime.
-- Testes de prompt Tsundere, até `prompt-v6-examples`, não produziram personalidade confiável. A resposta de autenticação ficou mais segura, mas o estilo continuou inconsistente. A bateria está preservada como opcional; aguardar a lista de personas do usuário antes de retomar.
+- O diagnóstico `20260930-085425` confirmou uso efetivo de Vulkan no Qwen3-4B: runtime escolheu `Vulkan0`/RX 580 2048SP e registrou `offloaded 37/37 layers to GPU`. No carregamento final: Vulkan model buffer 2375,91 MiB, KV buffer 576 MiB e compute buffer 79,01 MiB; CPU_Mapped model buffer 304,28 MiB e Vulkan_Host compute buffer 14,01 MiB. Chrome estava fechado, VRAM livre pré-teste 7367 MiB. Não instalar/atualizar runtime.
 - Testes de prompt Tsundere, até `prompt-v6-examples`, não produziram personalidade confiável. A resposta de autenticação ficou mais segura, mas o estilo continuou inconsistente. A bateria está preservada como opcional; aguardar a lista de personas do usuário antes de retomar.
 - O usuário planeja fornecer personagens de anime para investigar personas múltiplas. Ao retomar, usar perfis comportamentais e exemplos com origem/licença clara; não presumir que dados de diálogo raspados estejam liberados.
 
 ## Próximo marco
 
-O próximo teste único é `Update-Lia.bat` sem argumentos: diagnóstico focado no Qwen3-4B, com logging verbose para registrar backend Vulkan, camadas e buffers, e duas amostras curtas. Não baixar pesos nem instalar/atualizar runtime. O Phi já baixado permanece registrado para remoção posterior. O roteiro está em [`docs/OMNI-ROADMAP.md`](docs/OMNI-ROADMAP.md).
+O Qwen3-4B é a base textual selecionada para a prova de conceito: passou as avaliações funcionais, não teve desvantagem clara frente ao 8B e o offload Vulkan foi confirmado (`37/37` camadas). Próximo marco: retomar a matriz de compatibilidade e desenhar a arquitetura modular de especialistas Omni, sem baixar/instalar componentes ainda. Manter o LLM e os módulos substituíveis; personalidade segue pausada até referências do usuário. Ver [`docs/OMNI-ROADMAP.md`](docs/OMNI-ROADMAP.md).

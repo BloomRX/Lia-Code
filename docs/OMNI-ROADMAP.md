@@ -9,14 +9,15 @@ Desenvolver uma assistente local para a Lia com capacidades **omnimodais**: conv
 - Priorizar software e pesos gratuitos, respeitando licenças e termos dos dados.
 - Hardware-alvo inicial: Windows, Radeon RX 580 com 8 GB de VRAM. Não presumir que um modelo “3B” ou um arquivo GGUF caiba na VRAM: encoders de áudio/vídeo, contexto e buffers também consomem memória.
 - O usuário autorizou downloads de pesos escolhidos pelo agente desde que cada recurso seja registrado com origem/caminho de exclusão. Não instalar ou atualizar runtime sem confirmação. Modelos e caches ficam fora do repositório.
-- Os relatórios cross-family comparam modelos **somente em tarefas de texto**. Qwen3-4B é a recomendação provisória por resultados funcionais e menor tamanho; Qwen3-8B não mostrou vantagem clara. A execução de 2026-09-30 08:27 pulou o 8B porque Chrome estava aberto. Isso não demonstra capacidade multimodal nem confirma offload GPU: os logs registraram `model loaded`, sem camadas/buffers Vulkan.
-- O próximo teste via `Update-Lia.bat` sem argumentos é um diagnóstico focado no Qwen3-4B, com logging verbose de inicialização para buscar evidência explícita de offload Vulkan. Não baixar pesos nem instalar/atualizar runtime; manter só duas amostras curtas.
-- O preflight Omni já confirmou a enumeração Vulkan da RX 580 2048SP, mas não carregou modelo. O WMI reportou 4 GiB enquanto Vulkan enumerou 8192 MiB; essa divergência precisa ser tratada com evidência do runtime durante inferência.
+- As comparações avaliaram LLMs **somente em tarefas de texto**. Qwen3-4B foi selecionado como base textual da prova de conceito: passou agenda, Python, JSON e não-invenção; o Qwen3-8B não mostrou vantagem clara e é maior. A execução de 08:27 pulou o 8B porque Chrome estava aberto, mas ele foi testado numa rodada anterior.
+- O diagnóstico `benchmark-results/lia-llm-comparison-20260930-085425.json` confirmou offload Vulkan: RX 580 2048SP escolhida; `offloaded 37/37 layers to GPU`; buffers finais: Vulkan model 2375,91 MiB, KV 576 MiB, compute 79,01 MiB. Também registrou 304,28 MiB `CPU_Mapped` e 14,01 MiB `Vulkan_Host` compute; não afirmar que todo byte do arquivo está em VRAM.
+- O WMI reportou 4 GiB enquanto Vulkan enumerou 8192 MiB; usar evidência do runtime, não o WMI isolado. Nenhum runtime foi atualizado.
+- Próximo marco: retomar a matriz de compatibilidade Omni e planejar módulos especializados substituíveis. Não baixar novos recursos até comparar documentalmente opções, registrar origem/licença/caminho e obter confirmação quando necessário.
 - A bateria de personalidade permanece pausada até chegar a lista de personas.
 
-## Próximo marco: validar a base textual no runtime
+## Próximo marco: arquitetura modular Omni
 
-Usar Qwen3-4B como baseline provisório e capturar logs detalhados do `llama-server` para confirmar se houve offload Vulkan, quantas camadas foram carregadas e quais buffers foram alocados. Sem evidência, não afirmar que o modelo executou na GPU. Essa rodada não baixa pesos nem altera o runtime; o Phi já baixado continua no [`RESOURCE-REGISTRY.md`](RESOURCE-REGISTRY.md) para limpeza posterior. Só depois de validar a base textual retomar a matriz de compatibilidade Omni:
+A base textual para a prova de conceito é Qwen3-4B; o runtime Vulkan carregou todas as camadas reportadas e registrou buffers, conforme o diagnóstico acima. Isso valida apenas inferência de texto, não multimodalidade. Retomar a avaliação documental dos módulos de entrada/saída e runtimes; manter o LLM central e os especialistas substituíveis. Não baixar novos modelos nem instalar/atualizar runtime nesta fase. O Phi já baixado continua registrado para limpeza posterior:
 
 1. **Modalidades de entrada:** texto, imagem, fala, áudio não verbal e vídeo (incluindo áudio sincronizado).
 2. **Modalidades de saída:** texto e voz; qualidade e latência de fala em português brasileiro.

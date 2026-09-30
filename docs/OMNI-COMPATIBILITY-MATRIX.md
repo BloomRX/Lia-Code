@@ -1,6 +1,6 @@
 # Matriz preliminar de compatibilidade Omni
 
-**Estado:** avaliação documental, sem downloads nem inferência. Revisada em 2026-09-29 a partir do preflight local `benchmark-results/lia-benchmark-20260929-221630.json` (commit `26a431b`). Esta matriz separa capacidades declaradas pelo modelo das comprovadas no hardware/runtime da Lia.
+**Estado:** avaliação documental de modalidades; revisada em 2026-09-30 com evidência textual Vulkan do relatório `benchmark-results/lia-llm-comparison-20260930-085425.json`. A matriz separa capacidades declaradas dos modelos daquelas comprovadas no hardware/runtime da Lia; Qwen3-4B só foi validado para texto.
 
 ## Ambiente observado
 
@@ -9,8 +9,8 @@
 | Sistema/CPU | Windows 11 Home, build 26200; Ryzen 5 5500, 6C/12T | Ambiente Windows x64 confirmado. |
 | RAM | 15,89 GiB instalada; 5,09 GiB livres no início | Pouca margem para offload pesado à RAM enquanto Windows e aplicações estão ativos. |
 | GPU | Radeon RX 580 2048SP; WMI reportou 4 GiB | WMI diverge do runtime; não usar esse número isoladamente. |
-| Vulkan | llama.cpp enumerou `Vulkan0: AMD Radeon RX 580 2048SP (8192 MiB, 7367 MiB free)` | Confirma enumeração Vulkan e memória livre naquele instante, não execução/offload de modelo. |
-| Runtime encontrado | Cache local `llama.cpp 0.5.0-dev (build 11249, commit 6d78fb072)`, binário Vulkan; não está no PATH | A versão exibida não basta para deduzir suporte a cada modelo/modalidade. |
+| Vulkan | `Vulkan0: AMD Radeon RX 580 2048SP (8192 MiB, 7367 MiB free)` | Enumeração mais diagnóstico de Qwen3-4B com `--verbose`: `offloaded 37/37 layers to GPU`; confirma offload para inferência de texto, não capacidade Omni. |
+| Runtime encontrado | Cache local `llama.cpp 0.5.0-dev (build 11249, commit 6d78fb072)`, binário Vulkan; não está no PATH | O diagnóstico verbose carregou Qwen3-4B: `offloaded 37/37 layers to GPU`; buffers finais 2375,91 MiB Vulkan model, 576 MiB KV, 79,01 MiB compute; 304,28 MiB CPU_Mapped e 14,01 MiB Vulkan_Host compute. Confirma offload para inferência textual, não suporte Omni. |
 | Outros runtimes/assets | Ollama ausente; nenhum asset com nome Omni detectado | Nenhum candidato Omni local foi testado. |
 | Espaço no cache | 202,11 GiB livres | Espaço em disco disponível não implica compatibilidade ou VRAM suficiente. |
 
@@ -24,10 +24,10 @@
 
 ## Conclusão e próximo marco
 
-1. O preflight foi concluído sem baixar ou carregar modelos. Há uma RX 580 2048SP com 8 GiB reconhecida pelo backend Vulkan e cerca de 7,2 GiB livres na enumeração observada. Isso **não** prova execução Omni.
-2. A implementação oficial Qwen2.5-Omni-3B em BF16 para vídeo excede a VRAM disponível. A rota GGUF/llama.cpp oferece apenas um subconjunto documentado das modalidades Omni completas; a versão local também não foi qualificada para isso.
-3. O próximo teste seleciona o LLM-base: compara Qwen3-4B com Phi-4-mini-instruct Q4_K_M. O usuário autorizou o download desse tipo de peso escolhido pelo agente, com registro do caminho e checksum para remoção posterior. O teste não instala/atualiza runtime; Granite e Mistral só são usados se já estiverem em cache.
-4. Depois de escolher a base textual, retomar a comparação documental dos especialistas para imagem/áudio/vídeo/voz e propor uma prova de conceito modular pequena.
+1. A base textual para a prova de conceito foi selecionada: **Qwen3-4B Q4_K_M**. Passou os checks de agenda, código Python, JSON e não-invenção; não mostrou desvantagem clara frente ao Qwen3-8B, que é maior. O Phi-4-mini foi inferior na rodada observada em agenda e código.
+2. O diagnóstico confirmou inferência textual com Vulkan na RX 580 2048SP: `offloaded 37/37 layers to GPU`. Isso **não** prova capacidade multimodal Omni.
+3. A implementação oficial Qwen2.5-Omni-3B em BF16 para vídeo excede a VRAM disponível. A rota GGUF/llama.cpp oferece apenas um subconjunto documentado das modalidades Omni completas; o runtime local ainda não foi qualificado para esses modelos.
+4. Próximo: retomar a comparação documental dos especialistas para imagem/áudio/vídeo/voz e projetar uma prova de conceito modular pequena. Não baixar recursos nem instalar/atualizar runtime até registrar compatibilidade, licença e requisitos.
 
 ## Fontes
 

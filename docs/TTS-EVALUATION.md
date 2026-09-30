@@ -1,10 +1,10 @@
 # Avaliação documental de TTS — português brasileiro
 
-**Estado:** o preflight SAPI de `20260930-091635` encontrou `Microsoft Maria Desktop` (pt-BR) e gerou uma amostra WAV local de 860.206 bytes. Nenhum peso, runtime ou pacote foi baixado/instalado. A amostra é um baseline do Windows, não TTS neural; falta avaliação subjetiva do usuário. O foco escolhido é TTS; ASR continua separado, mas será integrado depois para validar fala→texto→resposta→fala.
+**Estado:** o preflight SAPI de `20260930-091635` encontrou `Microsoft Maria Desktop` (pt-BR) e gerou uma amostra WAV local de 860.206 bytes. O usuário avaliou a voz como robótica e lenta, sem naturalidade/persona; rejeitada como voz final. Nenhum peso, runtime ou pacote foi baixado/instalado. Agora priorizar comparação de TTS neural; ASR continua separado, mas será integrado depois para validar fala→texto→resposta→fala.
 
 ## Conclusão curta
 
-O Windows já oferece um baseline pt-BR sem nova instalação: Microsoft Maria Desktop via SAPI. A amostra `lia-sapi-ptbr-20260930-091635.wav` está em `%LOCALAPPDATA%\Lia-Code\benchmark-cache\tts` e deve ser ouvida antes de julgar qualidade. Relatório: `benchmark-results/lia-tts-preflight-20260930-091635.json`. Se a voz for suficiente para a prova de conceito, podemos usá-la temporariamente enquanto integramos ASR; se não, comparar TTS neural.
+A Microsoft Maria SAPI foi ouvida e rejeitada pelo usuário por soar robótica e lenta. Não a usar como voz final. Próximo: verificar quais runtimes TTS neural já estão instalados e, se houver rota executável, comparar Piper Faber ONNX CPU com Kokoro em texto idêntico. A verificação será apenas inventário local, sem downloads, instalações ou síntese.
 
 Dois candidatos justificam uma prova de áudio neural depois que a rota de runtime for aprovada:
 
@@ -49,8 +49,8 @@ Depois de aprovar a rota de runtime, comparar primeiro Faber e Kokoro em execuç
 
 - O runtime local já confirmado é `llama.cpp` Vulkan para Qwen3-4B; ele não fornece, por si só, inferência Kokoro ou Piper. Não reutilizar o mesmo executável como se fosse compatível com esses vocoders.
 - ONNX Runtime, PyTorch, eSpeak NG e qualquer frontend TTS ainda não foram confirmados como instalados. **Não os instalar nem atualizar sem autorização.** A autorização permanente para baixar pesos não cobre runtimes/dependências.
-- Preflight executado via `Update-Lia.bat` sem argumentos: `System.Speech` estava disponível, listou Maria pt-BR e Zira en-US, e gerou a amostra WAV. Não houve download nem instalação. Esse resultado é somente baseline/fallback do Windows, não prova de TTS neural.
-- Próximo gate: ouvir a amostra e avaliar naturalidade, clareza, sotaque, ritmo e se serve provisoriamente à Lia. Se não servir, escolher entre rota ONNX CPU/Faber e Kokoro/PyTorch, revisar termos e pedir autorização antes de qualquer instalação/atualização de runtime. Pesos podem ser baixados dentro da autorização existente, com origem, revisão, licença, SHA-256 e caminho externo registrados em [`RESOURCE-REGISTRY.md`](RESOURCE-REGISTRY.md).
+- Preflight SAPI `20260930-091635` confirmou uma voz pt-BR instalada; o usuário a rejeitou por robótica/lentidão. Guardar o WAV somente até o usuário não precisar mais dele; caminho e hash estão no relatório correspondente.
+- Próximo passo implementado: `Update-Lia.bat` sem argumentos inventaria Python, ONNX Runtime/provedores, PyTorch/Kokoro, Piper/eSpeak e pesos TTS já em cache. Não acessa a rede, baixa ou instala nada. Com esse inventário decidir qual rota de inferência neural já pode ser testada; se nenhuma existir, solicitar autorização de runtime antes de instalar. Pesos seguem autorizados desde que origem, revisão, licença, SHA-256 e caminho externo sejam registrados em [`RESOURCE-REGISTRY.md`](RESOURCE-REGISTRY.md).
 
 ## Fontes primárias consultadas
 

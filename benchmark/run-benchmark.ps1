@@ -10,20 +10,34 @@ $reportPath = Join-Path $outDir "lia-benchmark-$stamp.json"
 $issues = [System.Collections.Generic.List[string]]::new()
 $report = [ordered]@{
     schemaVersion = 1
+    evaluation = 'omni-runtime-preflight'
     createdAt = (Get-Date).ToString('o')
     machine = [ordered]@{}
     software = [ordered]@{}
     accelerators = @()
     runtimes = [ordered]@{}
+    omniReadiness = [ordered]@{
+        stage = 'preflight-only; no model downloaded or executed'
+        referenceCandidate = 'Qwen2.5-Omni-3B (not selected)'
+        declaredInputs = @('text', 'image', 'audio', 'video')
+        declaredOutputs = @('text', 'speech')
+        officialBf16MinimumVramGiBFor15SecondVideo = 18.38
+        statedActualUsageMultiplierAtLeast = 1.2
+        memoryReferenceSource = 'https://github.com/QwenLM/Qwen2.5-Omni#minimum-gpu-memory-requirements'
+        targetGpuVramGiB = 8
+        quantizedRuntimeVerified = $false
+        modelSpecificMultimodalSupportVerified = $false
+        cachedOmniAssets = @()
+    }
     notes = @()
 }
 
 $rawLogPath = Join-Path $env:TEMP "lia-benchmark-raw-$stamp.log"
 Start-Transcript -Path $rawLogPath -Force | Out-Null
 try {
-    Write-Host 'Lia-Code - diagnóstico inicial de benchmark' -ForegroundColor Cyan
-    Write-Host 'Nenhum modelo será baixado ou instalado.'
-    Write-Host 'Coletando informações do sistema...'
+    Write-Host 'Lia-Code - preflight de viabilidade Omni' -ForegroundColor Cyan
+    Write-Host 'Nenhum modelo será baixado, instalado ou executado nesta etapa.'
+    Write-Host 'Coletando hardware, runtimes, dispositivos enumerados e modelos Omni já existentes...'
 
     $os = Get-CimInstance Win32_OperatingSystem -ErrorAction Stop
     $cpu = Get-CimInstance Win32_Processor -ErrorAction Stop | Select-Object -First 1
@@ -87,13 +101,66 @@ try {
         $cmd = Get-Command $name -ErrorAction SilentlyContinue
         $foundLlama[$name] = [bool]$cmd
     }
-    $report.runtimes.llamaCpp = $foundLlama
-    if (-not ($foundLlama.Values | Where-Object { $_ })) {
-        $report.notes += 'llama.cpp não foi encontrado no PATH; o teste inicial apenas identifica hardware e software. Nenhum modelo foi executado.'
+    $cacheRoot = Join-Path $env:LOCALAPPDATA 'Lia-Code\benchmark-cache'
+    $cachedRuntime = Join-Path $cacheRoot 'llama-b11249-vulkan'
+    $modelCache = Join-Path $cacheRoot 'models'
+    $cachedCli = $null
+    if (Test-Path -LiteralPath $cachedRuntime) {
+        $cachedCli = Get-ChildItem -LiteralPath $cachedRuntime -Filter 'llama-cli.exe' -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+    }
+    $cliCommand = Get-Command 'llama-cli' -ErrorAction SilentlyContinue
+    $cliPath = if ($cachedCli) { $cachedCli.FullName } elseif ($cliCommand) { $cliCommand.Source } else { $null }
+    $versionOutput = @()
+    $versionExit = $null
+    $deviceOutput = @()
+    $deviceExit = $null
+    if ($cliPath) {
+        Write-Host "`nEnumerando os dispositivos vistos pelo llama.cpp (sem carregar modelo)..."
+        $versionOutput = @(& $cliPath --version 2>&1 | ForEach-Object { [string]$_ })
+        $versionExit = $LASTEXITCODE
+        $deviceOutput = @(& $cliPath --list-devices 2>&1 | ForEach-Object { [string]$_ })
+        $deviceExit = $LASTEXITCODE
+        $deviceOutput | ForEach-Object { Write-Host $_ }
+    }
+    $deviceText = $deviceOutput -join [Environment]::NewLine
+    $report.runtimes.llamaCpp = [ordered]@{
+        commandsOnPath = $foundLlama
+        cachedVulkanRuntimeFound = [bool]$cachedCli
+        cliExecutableFound = [bool]$cliPath
+        versionExitCode = $versionExit
+        versionOutput = $versionOutput
+        listDevicesExitCode = $deviceExit
+        listDevicesOutput = $deviceOutput
+        vulkanDeviceListed = [bool]($deviceText -match '(?i)Vulkan')
+    }
+    if (-not $cliPath) {
+        $report.notes += 'llama-cli não foi encontrado nem no cache Lia-Code nem no PATH; dispositivos Vulkan não puderam ser enumerados.'
+    } elseif ($deviceExit -ne 0) {
+        $report.notes += 'llama-cli --list-devices falhou; o preflight não confirma backends Vulkan.'
+    } else {
+        $report.notes += 'A enumeração lista dispositivos disponíveis; não comprova que um modelo multimodal específico seja suportado ou caiba na VRAM.'
     }
 
-    $report.notes += 'VRAM via WMI pode estar ausente ou incorreta; será validada com ferramentas do runtime escolhido.'
-    $report.notes += 'Este é o benchmark de reconhecimento do ambiente (fase 0), não um teste comparativo de qualidade/velocidade de LLM.'
+    $cachedOmniAssets = @()
+    if (Test-Path -LiteralPath $modelCache) {
+        $cachedOmniAssets = @(Get-ChildItem -LiteralPath $modelCache -File -Recurse -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -match '(?i)omni' } |
+            Select-Object @{Name='fileName';Expression={$_.Name}}, @{Name='sizeGiB';Expression={[math]::Round($_.Length / 1GB, 2)}})
+    }
+    $report.omniReadiness.cachedOmniAssets = $cachedOmniAssets
+    try {
+        $cacheDrive = [System.IO.DriveInfo]::new([System.IO.Path]::GetPathRoot($cacheRoot))
+        $report.omniReadiness.cacheFreeSpaceGiB = [math]::Round($cacheDrive.AvailableFreeSpace / 1GB, 2)
+    } catch { $report.omniReadiness.cacheFreeSpaceGiB = $null }
+    $report.omniReadiness.runtimeDeviceEnumeration = $deviceOutput
+    $report.omniReadiness.vulkanDeviceListed = [bool]($deviceText -match '(?i)Vulkan')
+
+    if ($ollama -and $ollamaList) {
+        $ollamaOmni = @($ollamaList -split '[\r\n]+' | Where-Object { $_ -match '(?i)omni' })
+        if ($ollamaOmni.Count -gt 0) { $report.omniReadiness.cachedOmniAssets += @($ollamaOmni) }
+    }
+    $report.notes += 'VRAM via WMI pode estar ausente ou incorreta; a enumeração Vulkan informa dispositivos, não memória livre nem offload real.'
+    $report.notes += 'Este preflight não baixa nem executa modelos e não verifica processamento de imagem, áudio, vídeo ou geração de voz.'
 
     $json = $report | ConvertTo-Json -Depth 8
     Set-Content -LiteralPath $reportPath -Value $json -Encoding UTF8

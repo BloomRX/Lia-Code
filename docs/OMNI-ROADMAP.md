@@ -10,7 +10,7 @@ Desenvolver uma assistente local para a Lia com capacidades **omnimodais**: conv
 - Hardware-alvo inicial: Windows, Radeon RX 580 com 8 GB de VRAM. Não presumir que um modelo “3B” ou um arquivo GGUF caiba na VRAM: encoders de áudio/vídeo, contexto e buffers também consomem memória.
 - Confirmar antes de iniciar downloads grandes ou instalar runtimes adicionais. Modelos e caches ficam fora do repositório.
 - Os relatórios atuais comparam Qwen3 4B e 8B **somente em tarefas de texto**; ambos foram viáveis nos testes qualitativos, sem vantagem clara do 8B. Isso não demonstra capacidade multimodal nem confirma o número de camadas efetivamente descarregadas na GPU (`serverStartupEvidence` dos relatórios está vazio).
-- O `Update-Lia.bat` padrão está pausado na etapa de personalidade: ele roda apenas a comparação de qualidade 4B/8B. A bateria de personalidade permanece disponível separadamente, mas não é prioridade até chegar a lista de personas.
+- O próximo teste via `Update-Lia.bat` sem argumentos é um preflight Omni sem downloads: inventaria hardware, cache e dispositivos enumerados pelo runtime. Ele não carrega pesos nem comprova suporte multimodal ou offload de um modelo específico. A comparação textual 4B/8B continua disponível como modo explícito; a bateria de personalidade permanece pausada até chegar a lista de personas.
 
 ## Próximo marco: viabilidade multimodal, sem download
 

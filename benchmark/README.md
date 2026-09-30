@@ -2,7 +2,7 @@
 
 ## Um clique para o próximo teste
 
-Para executar o ciclo atual, use **`Update-Lia.bat` na raiz, sem argumentos**. Ele atualiza a branch uma vez e roda em sequência a comparação de qualidade do controle Qwen3-4B com o candidato Qwen3-8B; cada relatório é salvo e enviado. A etapa de personalidade está pausada e não roda por padrão. Se detectar o Chrome aberto, o launcher avisa que ele pode consumir VRAM na RX 580 de 8 GB: feche-o e escolha S, escolha R para prosseguir mesmo assim, ou C para cancelar. O teste 8B reutiliza o modelo em cache; se estiver ausente, pede confirmação antes do download grande. Opções: `benchmark\Test-Lia-Quality.bat` (mesma comparação), `benchmark\Test-Lia-Personality.bat` (personalidade avulsa quando retomarmos), `Update-Lia.bat quality` ou `benchmark\Test-Lia-8B.bat` para rodar um teste isolado, e `Update-Lia.bat speed` para throughput. Os relatórios ficam em `benchmark-results/` e são enviados para `origin/arena/01a0ec89-lia-code` quando Git estiver autenticado.
+Para executar o próximo teste Omni, use **`Update-Lia.bat` na raiz, sem argumentos**. Ele atualiza a branch uma vez e executa um preflight sem baixar nem carregar modelos: coleta hardware, inventaria assets Omni já presentes no cache e tenta enumerar os dispositivos com `llama-cli --list-devices`. O relatório é salvo e enviado. Esse preflight não comprova suporte multimodal de um modelo específico nem estima a VRAM livre durante inferência; prepara a decisão de compatibilidade. A etapa de personalidade permanece pausada. Para repetir a comparação textual, use `Update-Lia.bat quality-both` ou `benchmark\Test-Lia-Quality.bat`; para testes isolados existem `Update-Lia.bat quality`, `Update-Lia.bat quality-8b`, `benchmark\Test-Lia-8B.bat` e `Update-Lia.bat speed`. A bateria de personalidade segue disponível em `benchmark\Test-Lia-Personality.bat`, mas não roda por padrão. Os relatórios ficam em `benchmark-results/` e são enviados para `origin/arena/01a0ec89-lia-code` quando Git estiver autenticado.
 
 O atualizador faz backup de relatórios rastreados que estejam localmente alterados para `%LOCALAPPDATA%\Lia-Code\report-backups`, restaura apenas esses arquivos gerados e então executa `git pull --ff-only`. Alterações de código não são restauradas nem descartadas.
 
@@ -10,7 +10,7 @@ Para repetir o benchmark de velocidade, use `Update-Lia.bat speed`. Ambos os mod
 
 ## Fase 0 — diagnóstico de ambiente
 
-`benchmark/Run-Lia-Benchmark.bat` registra informações gerais de Windows, CPU, RAM, GPU/driver e runtimes encontrados. Não instala programas nem baixa modelos. A leitura de VRAM via WMI pode estar limitada; o runtime Vulkan fornece uma confirmação melhor.
+`Update-Lia.bat` sem argumentos executa `benchmark/run-benchmark.ps1`: registra Windows, CPU, RAM, GPU/driver, espaço no cache, modelos Omni já presentes e runtimes encontrados. Quando acha `llama-cli` no cache ou PATH, captura versão e saída de `--list-devices`; isso confirma apenas a enumeração do backend, não o offload de um modelo Omni. Não instala nada nem baixa ou carrega pesos. A leitura de VRAM via WMI pode estar ausente/incorreta; os detalhes vão para `benchmark-results/`.
 
 ## Fase 1 — velocidade local
 

@@ -8,4 +8,4 @@ Definir a viabilidade de texto, imagem, áudio, vídeo e voz nos runtimes e no h
 
 ## Benchmarks atuais
 
-Os testes de texto Qwen3 4B/8B e o launcher ficam documentados em [`benchmark/README.md`](benchmark/README.md). `Update-Lia.bat` na raiz roda a comparação atual; a bateria de personalidade está pausada enquanto aguardamos a lista de personas.
+Os testes e launchers ficam documentados em [`benchmark/README.md`](benchmark/README.md). `Update-Lia.bat` na raiz executa o próximo preflight Omni sem downloads; a comparação textual 4B/8B é uma opção explícita. A bateria de personalidade está pausada enquanto aguardamos a lista de personas.

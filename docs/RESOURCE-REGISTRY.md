@@ -1,6 +1,17 @@
 # Registro de recursos externos da Lia
 
-Este registro lista pesos e runtimes guardados fora do Git para que possam ser excluídos ao fim do projeto. A autorização do usuário permite ao agente baixar modelos escolhidos, desde que origem/licença/caminho sejam registrados. **Nenhum runtime/software adicional está autorizado para instalação ou atualização. Não use `git clean` para remover esses recursos.**
+Este registro lista pesos e runtimes guardados fora do Git para que possam ser excluídos ao fim do projeto. O usuário autorizou downloads de modelos e, em 2026-09-30, ambientes TTS isolados/removíveis Piper + DirectML; não instalar ou atualizar runtimes globalmente nem outros stacks sem nova confirmação. **Não use `git clean` para remover esses recursos.**
+
+## Avaliação TTS Piper Faber + DirectML — instalada em diretório removível
+
+- **Uso/estado:** benchmark CPU vs DirectML `20260930-112224`; DirectML executou nós confirmados no perfil ONNX Runtime. CPU venceu latência do primeiro áudio; DirectML terminou antes o texto longo. Relatório: `benchmark-results/lia-piper-latency-20260930-112224.json`.
+- **Raiz externa removível:** `%LOCALAPPDATA%\Lia-Code\tts\piper-directml-eval`. Contém peso, config, wheels, pip cache, venvs CPU/DirectML, manifestos de inventário de pacotes, perfis e WAVs. Para remover todo o experimento TTS, fechar processos e excluir somente essa pasta; não toca o Python/ORT CPU global.
+- **Modelo Faber:** `models\faber-medium\pt_BR-faber-medium.onnx`, 63.201.294 bytes; origem oficial [`rhasspy/piper-voices`](https://huggingface.co/rhasspy/piper-voices/resolve/2f8dbe0bb0dde986411632bf014a13cdbe6596e7/pt/pt_BR/faber/medium/pt_BR-faber-medium.onnx), revisão `2f8dbe0bb0dde986411632bf014a13cdbe6596e7`; SHA-256 `858555e3a064209c57088fe6bd70c4c3dc54d03eaa00c45d5ecaf43a33f95aa7`. O card upstream identifica o dataset como CC0, mas não especifica claramente licença própria do checkpoint. **Avaliação local somente, sem redistribuição até esclarecer.**
+- **Configuração da voz:** `pt_BR-faber-medium.onnx.json`, origem na mesma revisão; SHA-256 `b65310a5c057a8f99d6942f41cbb8a0a88670fc794f2c99a8dc0ce7a5cdf4a89`.
+- **Piper runtime/phonemizer:** `piper-tts` 1.8.0 wheel Windows x64, SHA-256 `5da9bfdb05dfe15da3536859d422e605483ffa6d2b3ec2c5b9593bae6b5aa6a4`; origem PyPI; GPL-3.0-or-later. Instalada somente nos venvs externos, com eSpeak embutido.
+- **ONNX Runtime DirectML:** 1.24.4 wheel CPython 3.14 Windows x64, SHA-256 `51d86bb949488e572b00422f344990a4a81d982416d73b6c0e4ced2bcd423d19`; origem PyPI; MIT. Instalado apenas no venv `env-directml`; versão CPU global preservada.
+- **WAVs:** `audio\cpu\faber-cpu-short.wav`, `audio\cpu\faber-cpu-paragraph.wav`, `audio\directml\faber-directml-short.wav`, `audio\directml\faber-directml-paragraph.wav`. Revisão auditiva ainda pendente.
+- **Dependências transitivas:** listas completas e metadados de licença ficam em `cpu-package-inventory.json` e `directml-package-inventory.json` sob a raiz externa, incluindo dependências PyPI baixadas pelo resolver.
 
 ## Phi-4-mini-instruct Q4_K_M — baixado, hash verificado e registrado
 

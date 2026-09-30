@@ -20,11 +20,11 @@ Motivo para começar modular: o alvo atual é uma RX 580 com 8 GB de VRAM. Como 
 ## Restrições permanentes do usuário
 
 - Preferir ferramentas e pesos gratuitos; verificar licenças de modelo, runtime, conversões e dados antes de usar.
-- O usuário autorizou downloads de modelos escolhidos pelo agente, desde que cada recurso externo seja registrado com caminho para remoção. Não instalar ou atualizar software/runtimes sem confirmação.
-- Manter pesos, runtimes e caches fora do repositório.
+- O usuário autoriza baixar pesos e recursos necessários quando origem, licença/SHA e caminho externo para remoção forem registrados. Em 2026-09-30, autorizou explicitamente ambientes TTS isolados/removíveis com Piper/DirectML para comparação; isso não autoriza instalar/atualizar runtimes globalmente ou adicionar outros stacks sem confirmação.
+- Manter pesos, runtimes, venvs e caches fora do repositório.
 - Não trocar de branch: todo trabalho nesta sessão fica em `arena/01a0ec89-lia-code`.
-- A raiz deve manter apenas `Update-Lia.bat` como launcher de benchmark; demais launchers ficam organizados em `benchmark/`.
-- `Update-Lia.bat` sem argumentos roda o preflight TTS de vozes Windows `System.Speech`/SAPI já instaladas; pode gerar uma amostra WAV externa se houver voz pt-BR. Não baixa pesos nem instala/atualiza runtime. Comparação cross-family, diagnóstico Qwen3-4B e preflight Omni permanecem modos explícitos; personalidade não roda por padrão.
+- A raiz deve manter apenas `Update-Lia.bat` como launcher de benchmark; demais scripts ficam organizados em `benchmark/`.
+- `Update-Lia.bat` sem argumentos executa Piper Faber em venvs CPU e DirectML externos, gera WAVs e relatório de latência, instala somente no diretório removível autorizado. Outros modos permanecem explícitos; personalidade não roda por padrão.
 
 ## Estado conhecido
 
@@ -39,4 +39,4 @@ Motivo para começar modular: o alvo atual é uma RX 580 com 8 GB de VRAM. Como 
 
 ## Próximo marco
 
-O Qwen3-4B é a base textual selecionada; offload Vulkan confirmado (`37/37` camadas). O usuário rejeitou Microsoft Maria SAPI por robótica/lentidão e prioriza a menor latência de voz na RX 580. Inventário confirmou Python 3.14.3 + ONNX Runtime 1.24.4 CPU, sem DirectML/eSpeak/modelo; Kokoro/PyTorch não presentes. Usuário autorizou venvs externos removíveis e downloads/instalação isolada para comparar Faber CPU vs DirectML, mantendo ORT CPU global intacto. Próximo teste é `Update-Lia.bat` sem argumentos; não declarar aceleração sem nós DML confirmados no perfil. ASR segue separado.
+O Qwen3-4B é a base textual selecionada; offload Vulkan confirmado (`37/37` camadas). Maria SAPI foi rejeitada. Benchmark `20260930-112224` confirmou Piper Faber CPU e DirectML na RX 580. Em texto curto: CPU primeiro áudio 80,5 ms / total 297 ms; DML 137,7 ms / total 652 ms. Em parágrafo: CPU primeiro áudio 88,7 ms / total 1,494 s; DML 219,5 ms / total 1,155 s. Nós DML confirmados; RTF 0,109/0,243 curto e 0,072/0,056 parágrafo. CPU provisoriamente preferível para resposta interativa por menor primeiro áudio; DML vence total em texto longo. Processo aquecido, 4 medições, carregamento do modelo separado (CPU 1,98 s; DML 2,39 s). WAVs externos em `%LOCALAPPDATA%\Lia-Code\tts\piper-directml-eval\audio`; pedir avaliação auditiva de qualidade antes de escolher a voz. Faber checkpoint license não explicitada para o peso; não redistribuir. ASR segue separado.

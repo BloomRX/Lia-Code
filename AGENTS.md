@@ -24,7 +24,7 @@ Motivo para começar modular: o alvo atual é uma RX 580 com 8 GB de VRAM. Como 
 - Manter pesos, runtimes e caches fora do repositório.
 - Não trocar de branch: todo trabalho nesta sessão fica em `arena/01a0ec89-lia-code`.
 - A raiz deve manter apenas `Update-Lia.bat` como launcher de benchmark; demais launchers ficam organizados em `benchmark/`.
-- `Update-Lia.bat` sem argumentos agora roda apenas o preflight Omni sem downloads: hardware, cache e enumeração de dispositivos do runtime. A comparação textual 4B/8B é explicitamente `Update-Lia.bat quality-both`. Não reativar a bateria de personalidade por padrão sem pedido do usuário.
+- `Update-Lia.bat` sem argumentos roda a comparação textual entre candidatos LLM já encontrados no cache, sem downloads/instalações; o preflight Omni permanece disponível como modo explícito. A comparação antiga 4B/8B e os testes isolados permanecem disponíveis. Não reativar a bateria de personalidade por padrão sem pedido do usuário.
 
 ## Estado conhecido
 
@@ -35,4 +35,4 @@ Motivo para começar modular: o alvo atual é uma RX 580 com 8 GB de VRAM. Como 
 
 ## Próximo marco
 
-O próximo teste único é `Update-Lia.bat` sem argumentos: executar o preflight Omni sem downloads, capturando dados do sistema/cache e a enumeração `llama-cli --list-devices` quando disponível. Esse resultado só informa prontidão do ambiente, não compatibilidade multimodal de um modelo. Depois de receber o relatório, produzir uma matriz **sem downloads** de candidatos omni e runtimes para Windows/RX 580/Vulkan: texto, imagem, fala/áudio, vídeo com áudio, voz de saída, quantização, memória, latência, suporte real por runtime e licença. Só então propor uma prova de conceito mínima; solicitar confirmação antes de baixar pesos ou instalar ferramentas. O roteiro está em [`docs/OMNI-ROADMAP.md`](docs/OMNI-ROADMAP.md).
+O próximo teste único é `Update-Lia.bat` sem argumentos: comparar, usando apenas GGUFs já em cache, candidatos LLM de mais de uma família (Qwen3 como referência, Phi-4-mini, Granite 3.3-2B e Mistral 7B quando disponíveis). O teste não baixa pesos nem instala runtimes; candidatos ausentes ou não suportados são registrados e ignorados. Usar o relatório e a revisão humana das respostas para selecionar a base textual antes de retomar a validação das outras modalidades. Pedir confirmação antes de baixar pesos ou instalar/atualizar ferramentas. O roteiro está em [`docs/OMNI-ROADMAP.md`](docs/OMNI-ROADMAP.md).

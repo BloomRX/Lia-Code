@@ -43,7 +43,8 @@ if not "%PULL_RESULT%"=="0" (
 )
 
 set "TEST_MODE=%~1"
-if not defined TEST_MODE set "TEST_MODE=tts-runtime-preflight"
+if not defined TEST_MODE set "TEST_MODE=tts-piper-accel"
+if /i "%TEST_MODE%"=="tts-piper-accel" set "PS_SCRIPT=%~dp0benchmark\run-piper-dml-benchmark.ps1"
 if /i "%TEST_MODE%"=="tts-runtime-preflight" set "PS_SCRIPT=%~dp0benchmark\run-tts-runtime-preflight.ps1"
 if /i "%TEST_MODE%"=="tts-preflight" set "PS_SCRIPT=%~dp0benchmark\run-tts-preflight.ps1"
 if /i "%TEST_MODE%"=="llm-baseline" (
@@ -64,8 +65,8 @@ if /i "%TEST_MODE%"=="quality-8b" (
 )
 if /i "%TEST_MODE%"=="speed" set "PS_SCRIPT=%~dp0benchmark\run-inference-benchmark.ps1"
 if not defined PS_SCRIPT (
-echo Uso: Update-Lia.bat [tts-runtime-preflight^|tts-preflight^|llm-baseline^|llm-comparison^|omni-preflight^|quality-both^|quality^|quality-8b^|personality^|speed]
-echo Sem argumento, detecta runtimes neural TTS ja presentes, sem download, instalacao ou atualizacao.
+echo Uso: Update-Lia.bat [tts-piper-accel^|tts-runtime-preflight^|tts-preflight^|llm-baseline^|llm-comparison^|omni-preflight^|quality-both^|quality^|quality-8b^|personality^|speed]
+echo Sem argumento, compara Piper Faber CPU versus DirectML em ambientes externos e removiveis.
 echo Use quality-both para repetir a comparacao textual 4B/8B; personalidade fica pausada.
   pause
   exit /b 2

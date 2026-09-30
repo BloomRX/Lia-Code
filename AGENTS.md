@@ -39,4 +39,4 @@ Motivo para começar modular: o alvo atual é uma RX 580 com 8 GB de VRAM. Como 
 
 ## Próximo marco
 
-O Qwen3-4B é a base textual selecionada; offload Vulkan confirmado (`37/37` camadas). O usuário rejeitou a voz SAPI `Microsoft Maria Desktop` por robótica/lenta e sem naturalidade. Próximo teste: `Update-Lia.bat` sem argumentos inventaria runtimes/pacotes e modelos TTS neurais já existentes (sem rede/download/instalação). Então selecionar uma rota neural possível; pedir autorização antes de runtime/dependências novos. ASR continua separado para integrar depois no ciclo de voz.
+O Qwen3-4B é a base textual selecionada; offload Vulkan confirmado (`37/37` camadas). O usuário rejeitou Microsoft Maria SAPI por robótica/lentidão e prioriza a menor latência de voz na RX 580. Inventário confirmou Python 3.14.3 + ONNX Runtime 1.24.4 CPU, sem DirectML/eSpeak/modelo; Kokoro/PyTorch não presentes. Usuário autorizou venvs externos removíveis e downloads/instalação isolada para comparar Faber CPU vs DirectML, mantendo ORT CPU global intacto. Próximo teste é `Update-Lia.bat` sem argumentos; não declarar aceleração sem nós DML confirmados no perfil. ASR segue separado.

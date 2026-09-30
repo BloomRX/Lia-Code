@@ -24,7 +24,7 @@ Motivo para começar modular: o alvo atual é uma RX 580 com 8 GB de VRAM. Como 
 - Manter pesos, runtimes e caches fora do repositório.
 - Não trocar de branch: todo trabalho nesta sessão fica em `arena/01a0ec89-lia-code`.
 - A raiz deve manter apenas `Update-Lia.bat` como launcher de benchmark; demais launchers ficam organizados em `benchmark/`.
-- `Update-Lia.bat` sem argumentos roda um diagnóstico curto do Qwen3-4B no runtime existente, com logging verbose e sem baixar pesos; nunca instala/atualiza runtime. A comparação cross-family continua disponível no modo explícito. O preflight Omni permanece como modo explícito, e personalidade não roda por padrão.
+- `Update-Lia.bat` sem argumentos roda o preflight TTS de vozes Windows `System.Speech`/SAPI já instaladas; pode gerar uma amostra WAV externa se houver voz pt-BR. Não baixa pesos nem instala/atualiza runtime. Comparação cross-family, diagnóstico Qwen3-4B e preflight Omni permanecem modos explícitos; personalidade não roda por padrão.
 
 ## Estado conhecido
 
@@ -38,4 +38,4 @@ Motivo para começar modular: o alvo atual é uma RX 580 com 8 GB de VRAM. Como 
 
 ## Próximo marco
 
-O Qwen3-4B é a base textual selecionada para a prova de conceito: passou as avaliações funcionais, não teve desvantagem clara frente ao 8B e o offload Vulkan foi confirmado (`37/37` camadas). A proposta modular e a shortlist documental de especialistas estão em [`docs/OMNI-MODULAR-ARCHITECTURE.md`](docs/OMNI-MODULAR-ARCHITECTURE.md); nada foi baixado/instalado. Próximo marco: escolher a primeira prova de conceito de módulo após revisão de licenças/dependências e suporte Windows/runtime. Não instalar/atualizar runtimes sem autorização. Manter todos os módulos substituíveis; personalidade segue pausada até referências do usuário.
+O Qwen3-4B é a base textual selecionada; offload Vulkan confirmado (`37/37` camadas). O usuário escolheu TTS como próximo foco. A shortlist Piper Faber ONNX/Kokoro, análise de licença e protocolo estão em [`docs/TTS-EVALUATION.md`](docs/TTS-EVALUATION.md). Próxima execução: apenas `Update-Lia.bat` sem argumentos; o preflight verifica voz pt-BR SAPI já instalada e pode salvar um WAV local, sem downloads/instalações. ASR continua módulo separado para integrar depois no ciclo de voz.

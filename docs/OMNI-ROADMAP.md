@@ -12,7 +12,7 @@ Desenvolver uma assistente local para a Lia com capacidades **omnimodais**: conv
 - As comparações avaliaram LLMs **somente em tarefas de texto**. Qwen3-4B foi selecionado como base textual da prova de conceito: passou agenda, Python, JSON e não-invenção; o Qwen3-8B não mostrou vantagem clara e é maior. A execução de 08:27 pulou o 8B porque Chrome estava aberto, mas ele foi testado numa rodada anterior.
 - O diagnóstico `benchmark-results/lia-llm-comparison-20260930-085425.json` confirmou offload Vulkan: RX 580 2048SP escolhida; `offloaded 37/37 layers to GPU`; buffers finais: Vulkan model 2375,91 MiB, KV 576 MiB, compute 79,01 MiB. Também registrou 304,28 MiB `CPU_Mapped` e 14,01 MiB `Vulkan_Host` compute; não afirmar que todo byte do arquivo está em VRAM.
 - O WMI reportou 4 GiB enquanto Vulkan enumerou 8192 MiB; usar evidência do runtime, não o WMI isolado. Nenhum runtime foi atualizado.
-- Próximo marco: retomar a matriz de compatibilidade Omni e planejar módulos especializados substituíveis. Não baixar novos recursos até comparar documentalmente opções, registrar origem/licença/caminho e obter confirmação quando necessário.
+- Próximo foco escolhido: TTS primeiro, com ASR separado mas correlacionado no fluxo de voz. A avaliação documental de Piper Faber ONNX e Kokoro, dependências/licenças e protocolo de audição está em [`TTS-EVALUATION.md`](TTS-EVALUATION.md). Sem downloads ou instalações nesta fase.
 - A bateria de personalidade permanece pausada até chegar a lista de personas.
 
 ## Próximo marco: arquitetura modular Omni

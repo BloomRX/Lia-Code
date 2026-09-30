@@ -43,7 +43,8 @@ if not "%PULL_RESULT%"=="0" (
 )
 
 set "TEST_MODE=%~1"
-if not defined TEST_MODE set "TEST_MODE=llm-baseline"
+if not defined TEST_MODE set "TEST_MODE=tts-preflight"
+if /i "%TEST_MODE%"=="tts-preflight" set "PS_SCRIPT=%~dp0benchmark\run-tts-preflight.ps1"
 if /i "%TEST_MODE%"=="llm-baseline" (
   set "PS_SCRIPT=%~dp0benchmark\run-llm-comparison.ps1"
   set "PS_ARGS=-BaselineOnly"
@@ -62,8 +63,8 @@ if /i "%TEST_MODE%"=="quality-8b" (
 )
 if /i "%TEST_MODE%"=="speed" set "PS_SCRIPT=%~dp0benchmark\run-inference-benchmark.ps1"
 if not defined PS_SCRIPT (
-echo Uso: Update-Lia.bat [llm-baseline^|llm-comparison^|omni-preflight^|quality-both^|quality^|quality-8b^|personality^|speed]
-echo Sem argumento, valida Qwen3-4B com logs detalhados de offload, sem downloads.
+echo Uso: Update-Lia.bat [tts-preflight^|llm-baseline^|llm-comparison^|omni-preflight^|quality-both^|quality^|quality-8b^|personality^|speed]
+echo Sem argumento, verifica voz pt-BR SAPI ja instalada e gera amostra WAV local, sem downloads ou instalacoes.
 echo Use quality-both para repetir a comparacao textual 4B/8B; personalidade fica pausada.
   pause
   exit /b 2

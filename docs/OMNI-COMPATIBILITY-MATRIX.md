@@ -27,7 +27,7 @@
 1. A base textual para a prova de conceito foi selecionada: **Qwen3-4B Q4_K_M**. Passou os checks de agenda, código Python, JSON e não-invenção; não mostrou desvantagem clara frente ao Qwen3-8B, que é maior. O Phi-4-mini foi inferior na rodada observada em agenda e código.
 2. O diagnóstico confirmou inferência textual com Vulkan na RX 580 2048SP: `offloaded 37/37 layers to GPU`. Isso **não** prova capacidade multimodal Omni.
 3. A implementação oficial Qwen2.5-Omni-3B em BF16 para vídeo excede a VRAM disponível. A rota GGUF/llama.cpp oferece apenas um subconjunto documentado das modalidades Omni completas; o runtime local ainda não foi qualificado para esses modelos.
-4. Próximo: retomar a comparação documental dos especialistas para imagem/áudio/vídeo/voz e projetar uma prova de conceito modular pequena. Não baixar recursos nem instalar/atualizar runtime até registrar compatibilidade, licença e requisitos. A proposta de interfaces, fluxos e orçamento está em [`OMNI-MODULAR-ARCHITECTURE.md`](OMNI-MODULAR-ARCHITECTURE.md).
+4. Próximo foco confirmado pelo usuário: avaliar TTS primeiro, com ASR como módulo separado a integrar no ciclo de voz depois. A shortlist e o plano de teste estão em [`TTS-EVALUATION.md`](TTS-EVALUATION.md); interfaces e fluxos estão em [`OMNI-MODULAR-ARCHITECTURE.md`](OMNI-MODULAR-ARCHITECTURE.md). Sem novos pesos ou runtimes nesta avaliação documental.
 
 ## Fontes
 

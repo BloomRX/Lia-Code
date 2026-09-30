@@ -1,10 +1,12 @@
 # Avaliação documental de TTS — português brasileiro
 
-**Estado:** shortlist, sem download, instalação ou geração local de áudio. O foco escolhido pelo usuário é TTS, como primeira fatia do fluxo de voz; ASR continuará sendo um módulo separado, mas será integrado mais tarde para validar o ciclo completo fala→texto→resposta→fala.
+**Estado:** o preflight SAPI de `20260930-091635` encontrou `Microsoft Maria Desktop` (pt-BR) e gerou uma amostra WAV local de 860.206 bytes. Nenhum peso, runtime ou pacote foi baixado/instalado. A amostra é um baseline do Windows, não TTS neural; falta avaliação subjetiva do usuário. O foco escolhido é TTS; ASR continua separado, mas será integrado depois para validar fala→texto→resposta→fala.
 
 ## Conclusão curta
 
-Dois candidatos justificam uma prova de áudio depois que a rota de runtime for aprovada:
+O Windows já oferece um baseline pt-BR sem nova instalação: Microsoft Maria Desktop via SAPI. A amostra `lia-sapi-ptbr-20260930-091635.wav` está em `%LOCALAPPDATA%\Lia-Code\benchmark-cache\tts` e deve ser ouvida antes de julgar qualidade. Relatório: `benchmark-results/lia-tts-preflight-20260930-091635.json`. Se a voz for suficiente para a prova de conceito, podemos usá-la temporariamente enquanto integramos ASR; se não, comparar TTS neural.
+
+Dois candidatos justificam uma prova de áudio neural depois que a rota de runtime for aprovada:
 
 1. **Piper `pt_BR-faber-medium` ONNX** — primeiro candidato para avaliação de baixo consumo: arquivo de voz de aproximadamente 63 MB, uma voz masculina pt-BR, 22,05 kHz, voz/dataset declarados CC0 e inferência comunitária direta com ONNX Runtime CPU. O engine Piper atual é GPL-3.0-or-later; o exemplo ONNX sem Piper é fornecido por um rehost comunitário e requer eSpeak NG, cuja licença é GPL-3.0-or-later. Windows e a combinação final de dependências ainda não foram testados.
 2. **Kokoro-82M v1.0** — alternativa de maior interesse por variedade vocal: pesos e pacote Python Apache-2.0, frontend Misaki Apache-2.0 e três vozes pt-BR documentadas. A cadeia para português usa eSpeak NG `pt-br`/phonemização; avaliar essa dependência GPL separadamente. As notas de vozes alertam que dados G2P/treino em línguas não inglesas podem ser escassos; as vozes brasileiras não têm nota de qualidade publicada no `VOICES.md`.
@@ -47,8 +49,8 @@ Depois de aprovar a rota de runtime, comparar primeiro Faber e Kokoro em execuç
 
 - O runtime local já confirmado é `llama.cpp` Vulkan para Qwen3-4B; ele não fornece, por si só, inferência Kokoro ou Piper. Não reutilizar o mesmo executável como se fosse compatível com esses vocoders.
 - ONNX Runtime, PyTorch, eSpeak NG e qualquer frontend TTS ainda não foram confirmados como instalados. **Não os instalar nem atualizar sem autorização.** A autorização permanente para baixar pesos não cobre runtimes/dependências.
-- O próximo passo implementado é um preflight via `Update-Lia.bat` sem argumentos: tenta consultar apenas vozes Windows `System.Speech`/SAPI já instaladas e gera uma amostra WAV local se encontrar voz pt-BR. Se a API/voz não estiver disponível, registra isso sem instalar ou baixar nada. Esse resultado é somente baseline/fallback do Windows, não prova de TTS neural.
-- Se não houver voz nativa utilizável, a decisão seguinte será escolher a rota (ONNX CPU/Faber primeiro ou Kokoro/PyTorch) e revisar o pacote/termos. Só então preparar o teste pelo launcher único `Update-Lia.bat`; baixar pesos apenas com registro de origem, revisão, licença, SHA-256 e caminho externo em [`RESOURCE-REGISTRY.md`](RESOURCE-REGISTRY.md).
+- Preflight executado via `Update-Lia.bat` sem argumentos: `System.Speech` estava disponível, listou Maria pt-BR e Zira en-US, e gerou a amostra WAV. Não houve download nem instalação. Esse resultado é somente baseline/fallback do Windows, não prova de TTS neural.
+- Próximo gate: ouvir a amostra e avaliar naturalidade, clareza, sotaque, ritmo e se serve provisoriamente à Lia. Se não servir, escolher entre rota ONNX CPU/Faber e Kokoro/PyTorch, revisar termos e pedir autorização antes de qualquer instalação/atualização de runtime. Pesos podem ser baixados dentro da autorização existente, com origem, revisão, licença, SHA-256 e caminho externo registrados em [`RESOURCE-REGISTRY.md`](RESOURCE-REGISTRY.md).
 
 ## Fontes primárias consultadas
 

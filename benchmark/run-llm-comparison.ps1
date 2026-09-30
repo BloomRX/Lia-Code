@@ -1,4 +1,4 @@
-﻿$ErrorActionPreference = 'Stop'
+$ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
 $OutputEncoding = [Console]::OutputEncoding
@@ -65,7 +65,7 @@ $cases = @(
     [ordered]@{
         id = 'planejamento-com-restricoes'
         system = 'Siga todos os requisitos e responda em português brasileiro.'
-        user = 'Tenho 90 minutos. Monte exatamente quatro linhas numeradas para responder um e-mail urgente, revisar um pull request importante, começar um relatório que vence hoje e fazer uma pausa/transição. Some exatamente 90 minutos e dê uma justificativa curta por linha.'
+        user = 'Distribua 90 minutos entre: responder um e-mail urgente, revisar um pull request importante, começar um relatório que vence hoje e fazer uma pausa/transição. Responda em exatamente quatro linhas numeradas no formato “N min — tarefa — justificativa”; N deve ser um número inteiro de minutos, sem usar horários ou intervalos. Os quatro números precisam somar exatamente 90.'
         check = 'Automático: quatro durações em minutos somando 90. Humano: prioridades e justificativas sensatas.'
     },
     [ordered]@{
@@ -301,7 +301,7 @@ try {
             foreach ($diagnostic in @($stdout, $stderr)) {
                 try {
                     if ($diagnostic -and (Test-Path -LiteralPath $diagnostic)) {
-                        $candidate.startupEvidence += @(Get-Content -LiteralPath $diagnostic -ErrorAction SilentlyContinue | Where-Object { $_ -match '(?i)Vulkan|offload|device|GPU|layer|buffer|memory' } | ForEach-Object { Protect-Text ([string]$_) })
+                        $candidate.startupEvidence += @(Get-Content -LiteralPath $diagnostic -ErrorAction SilentlyContinue | Where-Object { $_ -match '(?i)Vulkan|offload|device|GPU|layer|buffer|memory|load|tensor|weight|model' } | ForEach-Object { Protect-Text ([string]$_) })
                     }
                 } catch {}
             }

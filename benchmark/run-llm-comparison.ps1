@@ -66,7 +66,7 @@ $cases = @(
     [ordered]@{
         id = 'planejamento-com-restricoes'
         system = 'Siga todos os requisitos e responda em português brasileiro.'
-        user = 'Distribua 90 minutos entre: responder um e-mail urgente, revisar um pull request importante, começar um relatório que vence hoje e fazer uma pausa/transição. Responda em exatamente quatro linhas numeradas no formato “N min — tarefa — justificativa”; N deve ser um número inteiro de minutos, sem usar horários ou intervalos. Os quatro números precisam somar exatamente 90.'
+        user = 'Distribua 90 minutos entre: responder um e-mail urgente, revisar um pull request importante, começar um relatório que vence hoje e fazer uma pausa/transição. Responda em exatamente quatro linhas numeradas no formato “1. N min — tarefa — justificativa”, usando 1, 2, 3 e 4 em sequência; N deve ser um número inteiro de minutos, sem horários nem intervalos. Os quatro números precisam somar exatamente 90.'
         check = 'Automático: quatro durações em minutos somando 90. Humano: prioridades e justificativas sensatas.'
     },
     [ordered]@{
@@ -189,7 +189,8 @@ try {
             if ($downloadedPhi.Length -lt 2GB) { throw 'O arquivo baixado é menor que 2 GiB; não será aceito no cache.' }
             $downloadedHash = (Get-FileHash -LiteralPath $partialPhiPath -Algorithm SHA256).Hash.ToLowerInvariant()
             if ($downloadedHash -ne $phiDownload.sha256) { throw 'SHA256 não confere com o artefato aprovado; download rejeitado.' }
-            Move-Item -LiteralPath $partialPhiPath -Destination $phiPath -NoClobber -ErrorAction Stop
+            if (Test-Path -LiteralPath $phiPath) { throw 'O arquivo de destino Phi apareceu durante o download; preservado sem sobrescrever.' }
+            Move-Item -LiteralPath $partialPhiPath -Destination $phiPath -ErrorAction Stop
             $phiDownloadStatus = 'downloaded-and-sha256-verified'
             $phiItem = Get-Item -LiteralPath $phiPath
             $report.externalResources += [ordered]@{

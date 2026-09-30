@@ -11,7 +11,7 @@ Este registro lista pesos e runtimes guardados fora do Git para que possam ser e
 - **SHA-256 esperado:** `01999f17c39cc3074afae5e9c539bc82d45f2dd7faa3917c66cbef76fce8c0c2`.
 - **Licença de origem:** MIT, conforme [cartão oficial do Microsoft Phi-4-mini-instruct](https://huggingface.co/microsoft/Phi-4-mini-instruct). A procedência/licença do arquivo quantizado será revisada antes de redistribuição.
 - **Compatibilidade do runtime:** upstream llama.cpp adicionou suporte ao Phi-4-mini no [PR #12108](https://github.com/ggml-org/llama.cpp/pull/12108), mesclado em 2025-02-28; ainda precisamos verificar se o runtime Vulkan local carrega esse arquivo.
-- **Estado:** o primeiro teste não encontrou Phi no cache. O próximo `Update-Lia.bat` fará o download somente se esse arquivo estiver ausente e houver pelo menos 3 GiB livres; só moverá o GGUF para o cache após validar o SHA-256. O teste não baixará candidatos adicionais.
+- **Estado:** o primeiro teste não encontrou Phi no cache. Na tentativa seguinte, o download de 2,49 GB chegou à verificação e o SHA-256 foi validado, mas o Windows PowerShell 5.1 rejeitou a opção `Move-Item -NoClobber`. O temporário foi removido; nenhum peso ficou no destino. O script foi corrigido para o próximo `Update-Lia.bat`: baixar somente se ausente, exigir pelo menos 3 GiB livres, verificar SHA-256 e preservar um destino que tenha surgido durante a transferência. O teste não baixará candidatos adicionais.
 - **Instalações:** nenhuma. O arquivo usa o llama.cpp Vulkan já presente, sem atualizá-lo.
 
 ## Modelos existentes registrados no preflight
@@ -19,7 +19,7 @@ Este registro lista pesos e runtimes guardados fora do Git para que possam ser e
 | Recurso | Caminho externo | Tamanho observado | Licença/origem | Estado |
 |---|---|---:|---|---|
 | Qwen3-4B-Instruct-2507 Q4_K_M — `Qwen_Qwen3-4B-Instruct-2507-Q4_K_M.gguf` | `%LOCALAPPDATA%\Lia-Code\benchmark-cache\models\` | 2,33 GiB | Apache-2.0; conversão GGUF Qwen/Bartowski | Usado no último teste |
-| Qwen3-8B Q4_K_M — `Qwen_Qwen3-8B-Q4_K_M.gguf` | `%LOCALAPPDATA%\Lia-Code\benchmark-cache\models\` | 4,68 GiB | Apache-2.0; conversão GGUF Qwen/Bartowski | Existente; foi pulado no último teste por margem de RAM |
+| Qwen3-8B Q4_K_M — `Qwen_Qwen3-8B-Q4_K_M.gguf` | `%LOCALAPPDATA%\Lia-Code\benchmark-cache\models\` | 4,68 GiB | Apache-2.0; conversão GGUF Qwen/Bartowski | Existente; executado na rodada de 2026-09-30 com Chrome fechado |
 | llama.cpp Vulkan b11249 | `%LOCALAPPDATA%\Lia-Code\benchmark-cache\llama-b11249-vulkan\` | Diretório de runtime | llama.cpp; não foi instalado/atualizado pelo teste atual | Usado pelo benchmark |
 
 Outros arquivos GGUF que porventura existam no cache são inventariados/selecionados pelo teste; nenhum será apagado automaticamente.

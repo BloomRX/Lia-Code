@@ -28,9 +28,11 @@ Motivo para começar modular: o alvo atual é uma RX 580 com 8 GB de VRAM. Como 
 
 ## Estado conhecido
 
-- Qwen3-4B e Qwen3-8B foram comparados em quatro casos de texto; ambos completaram, com verificações de agenda/JSON aprovadas. Não houve vantagem qualitativa decisiva do 8B; usar 4B como baseline textual por menor exigência de VRAM, sem declarar modelo final.
-- No teste cross-family 2026-09-29, somente Qwen3-4B estava disponível e foi executado. Phi/Granite/Mistral estavam ausentes; Qwen3-8B foi pulado por memória RAM livre insuficiente com Chrome aberto. Qwen3-4B produziu código/JSON corretos e não inventou dados, mas falhou na alocação de 90 minutos. A captura de logs de inicialização não trouxe evidência de offload GPU; o prompt de agenda e filtro de logs foram corrigidos para a próxima rodada.
-- Os relatórios até agora não confirmaram quantas camadas foram efetivamente executadas na GPU (`startupEvidence` vazio).
+- Benchmarks históricos de quatro prompts não mostraram vantagem qualitativa decisiva do Qwen3-8B. A comparação mais recente usou cinco prompts e reforçou o Qwen3-4B como baseline por eficiência, sem declará-lo modelo final.
+- No teste cross-family 2026-09-30, Qwen3-4B e 8B foram executados (Chrome fechado; 10,59 GiB RAM livre inicial). Ambos passaram código, JSON e não invenção de contexto. Qwen3-4B somou 15+20+45+10 min e priorizou melhor; Qwen3-8B somou 90 min, mas atribuiu 1 min à pausa e priorizou mal. Ambos responderam em quatro linhas sem numeração, apesar da versão anterior do prompt; a próxima versão exige numeração explícita. Sem vantagem clara do 8B.
+- A inicialização mostrou `model loaded`, mas não identificou backend/camadas offloaded; ainda não há prova de uso efetivo do Vulkan durante inferência.
+- Phi-4-mini não persistiu: primeira tentativa baixou/validou SHA, mas `Move-Item -NoClobber` não existe no PowerShell 5.1. O arquivo temporário foi removido; a opção incompatível foi corrigida para a próxima rodada.
+- Testes de prompt Tsundere, até `prompt-v6-examples`, não produziram personalidade confiável. A resposta de autenticação ficou mais segura, mas o estilo continuou inconsistente. A bateria está preservada como opcional; aguardar a lista de personas do usuário antes de retomar.
 - Testes de prompt Tsundere, até `prompt-v6-examples`, não produziram personalidade confiável. A resposta de autenticação ficou mais segura, mas o estilo continuou inconsistente. A bateria está preservada como opcional; aguardar a lista de personas do usuário antes de retomar.
 - O usuário planeja fornecer personagens de anime para investigar personas múltiplas. Ao retomar, usar perfis comportamentais e exemplos com origem/licença clara; não presumir que dados de diálogo raspados estejam liberados.
 

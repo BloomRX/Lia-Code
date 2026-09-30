@@ -1,0 +1,87 @@
+﻿{
+    "schemaVersion":  1,
+    "evaluation":  "neural-tts-runtime-availability-preflight",
+    "createdAt":  "2026-09-30T11:00:46.2705436-03:00",
+    "policy":  "Inventory already-present Python/ONNX/PyTorch/eSpeak components and matching local model files only. No network access, weight download, package installation, runtime update, or synthesis.",
+    "machine":  {
+                    "os":  "Microsoft Windows 11 Home",
+                    "osBuild":  "26200",
+                    "powershellVersion":  "5.1.26100.9444",
+                    "systemCulture":  "pt-BR"
+                },
+    "commands":  {
+                     "python.exe":  {
+                                        "available":  true,
+                                        "commandType":  "Application"
+                                    },
+                     "py.exe":  {
+                                    "available":  true,
+                                    "commandType":  "Application"
+                                },
+                     "espeak-ng.exe":  {
+                                           "available":  false,
+                                           "commandType":  null
+                                       },
+                     "espeak.exe":  {
+                                        "available":  false,
+                                        "commandType":  null
+                                    }
+                 },
+    "python":  {
+                   "executableAvailable":  true,
+                   "version":  "3.14.3",
+                   "probeExitCode":  0,
+                   "modules":  {
+                                   "onnxruntime":  true,
+                                   "kokoro":  false,
+                                   "torch":  false,
+                                   "transformers":  false,
+                                   "piper":  false,
+                                   "numpy":  true,
+                                   "soundfile":  true,
+                                   "huggingface_hub":  false
+                               },
+                   "onnxRuntimeVersion":  "1.24.4",
+                   "onnxExecutionProviders":  [
+                                                  "AzureExecutionProvider",
+                                                  "CPUExecutionProvider"
+                                              ],
+                   "probeError":  null
+               },
+    "modelCache":  {
+                       "piperFaberOnnxFiles":  [
+
+                                               ],
+                       "kokoroLikelyFiles":  [
+
+                                             ],
+                       "scannedOutsideRepository":  true
+                   },
+    "routeAssessment":  {
+                            "piperDirectOnnx":  {
+                                                    "python":  true,
+                                                    "onnxRuntime":  true,
+                                                    "cpuProvider":  true,
+                                                    "directMlProvider":  false,
+                                                    "espeakCommand":  false,
+                                                    "matchingFaberModelCached":  false,
+                                                    "readyToAttemptInference":  false,
+                                                    "note":  "Readiness is a prerequisite heuristic only; no model was loaded and license/provenance still require review."
+                                                },
+                            "kokoroPython":  {
+                                                 "python":  true,
+                                                 "kokoro":  false,
+                                                 "torch":  false,
+                                                 "transformers":  false,
+                                                 "espeakCommand":  false,
+                                                 "likelyModelOrVoiceFileCached":  false,
+                                                 "readyToAttemptInference":  false,
+                                                 "note":  "Readiness is a prerequisite heuristic only; no model was loaded and license/provenance still require review."
+                                             }
+                        },
+    "notes":  [
+                  "The rejected Microsoft Maria SAPI sample is not treated as the neural TTS candidate.",
+                  "Availability is detected without importing PyTorch, downloading models, contacting package indexes, or installing/updating software.",
+                  "A detected runtime or file is not proof of successful inference, quality, or a valid license; a later explicit test is still required."
+              ]
+}

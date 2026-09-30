@@ -29,8 +29,8 @@ Uma opção a investigar é Qwen2.5-Omni-3B: o projeto oficial descreve entradas
 
 ## Fases seguintes
 
-- **Fase A — compatibilidade:** comparar modelos omni pequenos e runtimes, sem baixar pesos.
-- **Fase B — prova de conceito:** após selecionar candidatos e registrar cada recurso baixado, testar o candidato de menor risco com amostras próprias pequenas para texto, imagem, fala, vídeo e fala de saída. Registrar qualidade, memória, latência e limites por modalidade; confirmar separadamente antes de instalar/atualizar ferramentas.
+- **Fase A — compatibilidade:** comparar candidatos de imagem/vídeo, ASR, eventos sonoros, TTS e demux de mídia; conferir formato, licença de código/pesos/dependências, suporte real em Windows/Vulkan e limites de memória. A shortlist e os pontos de risco estão em [`OMNI-MODULAR-ARCHITECTURE.md`](OMNI-MODULAR-ARCHITECTURE.md). Sem baixar pesos.
+- **Fase B — prova de conceito:** depois de escolher um módulo de baixo risco, registrar origem, revisão, licença e caminho externo dos pesos; testar com amostras próprias pequenas. Se isso exigir instalar, compilar ou atualizar runtime/dependências, pedir autorização antes. Medir qualidade, memória, latência e limites por modalidade.
 - **Fase C — integração Lia:** estabelecer interface única de conversa, streaming, interrupção de fala, permissões de câmera/microfone e funcionamento offline; manter módulos substituíveis quando um único modelo não cobrir uma tarefa.
 - **Fase D — personas:** depois que o usuário trouxer a lista de personagens, criar perfis configuráveis e exemplos originais para cada persona, com conjunto de avaliação separado. Só então comparar prompt, adapters/LoRA e outras técnicas, após verificar hardware, licença e dados.
 

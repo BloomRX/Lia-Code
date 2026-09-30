@@ -7,7 +7,7 @@
 | Item | Resultado do preflight | Interpretação |
 |---|---|---|
 | Sistema/CPU | Windows 11 Home, build 26200; Ryzen 5 5500, 6C/12T | Ambiente Windows x64 confirmado. |
-| RAM | 15,89 GiB instalada; 5,09 GiB livres no início | Pouca margem para offload pesado à RAM enquanto Windows e aplicações estão ativos. |
+| RAM | 15,89 GiB instalada; diagnóstico 2026-09-30 reportou 11,77 GiB livres com Chrome fechado | Disponibilidade varia com carga; repetir medidas por tarefa e não tratar o valor como garantido. |
 | GPU | Radeon RX 580 2048SP; WMI reportou 4 GiB | WMI diverge do runtime; não usar esse número isoladamente. |
 | Vulkan | `Vulkan0: AMD Radeon RX 580 2048SP (8192 MiB, 7367 MiB free)` | Enumeração mais diagnóstico de Qwen3-4B com `--verbose`: `offloaded 37/37 layers to GPU`; confirma offload para inferência de texto, não capacidade Omni. |
 | Runtime encontrado | Cache local `llama.cpp 0.5.0-dev (build 11249, commit 6d78fb072)`, binário Vulkan; não está no PATH | O diagnóstico verbose carregou Qwen3-4B: `offloaded 37/37 layers to GPU`; buffers finais 2375,91 MiB Vulkan model, 576 MiB KV, 79,01 MiB compute; 304,28 MiB CPU_Mapped e 14,01 MiB Vulkan_Host compute. Confirma offload para inferência textual, não suporte Omni. |
@@ -27,10 +27,15 @@
 1. A base textual para a prova de conceito foi selecionada: **Qwen3-4B Q4_K_M**. Passou os checks de agenda, código Python, JSON e não-invenção; não mostrou desvantagem clara frente ao Qwen3-8B, que é maior. O Phi-4-mini foi inferior na rodada observada em agenda e código.
 2. O diagnóstico confirmou inferência textual com Vulkan na RX 580 2048SP: `offloaded 37/37 layers to GPU`. Isso **não** prova capacidade multimodal Omni.
 3. A implementação oficial Qwen2.5-Omni-3B em BF16 para vídeo excede a VRAM disponível. A rota GGUF/llama.cpp oferece apenas um subconjunto documentado das modalidades Omni completas; o runtime local ainda não foi qualificado para esses modelos.
-4. Próximo: retomar a comparação documental dos especialistas para imagem/áudio/vídeo/voz e projetar uma prova de conceito modular pequena. Não baixar recursos nem instalar/atualizar runtime até registrar compatibilidade, licença e requisitos.
+4. Próximo: retomar a comparação documental dos especialistas para imagem/áudio/vídeo/voz e projetar uma prova de conceito modular pequena. Não baixar recursos nem instalar/atualizar runtime até registrar compatibilidade, licença e requisitos. A proposta de interfaces, fluxos e orçamento está em [`OMNI-MODULAR-ARCHITECTURE.md`](OMNI-MODULAR-ARCHITECTURE.md).
 
 ## Fontes
 
 - [Qwen2.5-Omni — repositório oficial](https://github.com/QwenLM/Qwen2.5-Omni): capacidades, licença e tabela de memória para Transformers/BF16.
 - [llama.cpp — documentação multimodal](https://github.com/ggml-org/llama.cpp/blob/master/docs/multimodal.md): capacidades específicas dos modelos GGUF publicados, incluindo Qwen2.5 Omni.
 - [llama.cpp PR #13784 — suporte Qwen2.5 Omni](https://github.com/ggml-org/llama.cpp/pull/13784): implementa áudio e visão de entrada; declara ausência de geração de áudio.
+- [SmolVLM2-500M-Video-Instruct — model card](https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct): entradas multimodais declaradas, Apache-2.0, limite de memória divulgado e escopo principalmente em inglês.
+- [whisper.cpp](https://github.com/ggml-org/whisper.cpp): MIT, Windows e suporte Vulkan de código-fonte; [issue #3673](https://github.com/ggml-org/whisper.cpp/issues/3673) registra que binários Windows Vulkan não seriam adicionados aos releases.
+- [Kokoro-82M — model card](https://huggingface.co/hexgrad/Kokoro-82M) e [lista oficial de vozes](https://huggingface.co/hexgrad/Kokoro-82M/blob/main/VOICES.md): pesos Apache-2.0 e três vozes pt-BR; auditar dados/qualidade e dependências como [eSpeak NG](https://github.com/espeak-ng/espeak-ng) (GPL-3.0-or-later).
+- [YAMNet — TensorFlow Models](https://github.com/tensorflow/models/tree/master/research/audioset/yamnet): especificação do classificador de eventos; conferir implementação atual, licença/procedência dos pesos e termos associados aos dados antes de considerar uso.
+- [FFmpeg — licença e considerações legais](https://www.ffmpeg.org/legal.html): LGPL-2.1-or-later como base; componentes opcionais GPL alteram as obrigações.

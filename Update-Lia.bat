@@ -43,7 +43,11 @@ if not "%PULL_RESULT%"=="0" (
 )
 
 set "TEST_MODE=%~1"
-if not defined TEST_MODE set "TEST_MODE=llm-comparison"
+if not defined TEST_MODE set "TEST_MODE=llm-baseline"
+if /i "%TEST_MODE%"=="llm-baseline" (
+  set "PS_SCRIPT=%~dp0benchmark\run-llm-comparison.ps1"
+  set "PS_ARGS=-BaselineOnly"
+)
 if /i "%TEST_MODE%"=="llm-comparison" set "PS_SCRIPT=%~dp0benchmark\run-llm-comparison.ps1"
 if /i "%TEST_MODE%"=="omni-preflight" set "PS_SCRIPT=%~dp0benchmark\run-benchmark.ps1"
 if /i "%TEST_MODE%"=="quality-both" set "PS_SCRIPT=%~dp0benchmark\run-quality-evaluation.ps1"
@@ -58,8 +62,8 @@ if /i "%TEST_MODE%"=="quality-8b" (
 )
 if /i "%TEST_MODE%"=="speed" set "PS_SCRIPT=%~dp0benchmark\run-inference-benchmark.ps1"
 if not defined PS_SCRIPT (
-echo Uso: Update-Lia.bat [llm-comparison^|omni-preflight^|quality-both^|quality^|quality-8b^|personality^|speed]
-echo Sem argumento, compara LLMs de texto ja encontrados no cache, sem downloads.
+echo Uso: Update-Lia.bat [llm-baseline^|llm-comparison^|omni-preflight^|quality-both^|quality^|quality-8b^|personality^|speed]
+echo Sem argumento, valida Qwen3-4B com logs detalhados de offload, sem downloads.
 echo Use quality-both para repetir a comparacao textual 4B/8B; personalidade fica pausada.
   pause
   exit /b 2

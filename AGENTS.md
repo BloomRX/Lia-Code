@@ -29,13 +29,14 @@ Motivo para começar modular: o alvo atual é uma RX 580 com 8 GB de VRAM. Como 
 ## Estado conhecido
 
 - Benchmarks históricos de quatro prompts não mostraram vantagem qualitativa decisiva do Qwen3-8B. A comparação mais recente usou cinco prompts e reforçou o Qwen3-4B como baseline por eficiência, sem declará-lo modelo final.
-- No teste cross-family 2026-09-30, Qwen3-4B e 8B foram executados (Chrome fechado; 10,59 GiB RAM livre inicial). Ambos passaram código, JSON e não invenção de contexto. Qwen3-4B somou 15+20+45+10 min e priorizou melhor; Qwen3-8B somou 90 min, mas atribuiu 1 min à pausa e priorizou mal. Ambos responderam em quatro linhas sem numeração, apesar da versão anterior do prompt; a próxima versão exige numeração explícita. Sem vantagem clara do 8B.
-- A inicialização mostrou `model loaded`, mas não identificou backend/camadas offloaded; ainda não há prova de uso efetivo do Vulkan durante inferência.
-- Phi-4-mini não persistiu: primeira tentativa baixou/validou SHA, mas `Move-Item -NoClobber` não existe no PowerShell 5.1. O arquivo temporário foi removido; a opção incompatível foi corrigida para a próxima rodada.
+- Na comparação cross-family de 2026-09-30, Qwen3-4B e 8B passaram código/JSON e não inventaram contexto. Ambos somaram 90 minutos na agenda com quatro itens numerados: 4B deu prioridade mais coerente (15/20/30/25); 8B também foi razoável (20/30/30/10). Não houve vantagem clara do 8B.
+- A rodada `20260930-082728` testou Qwen3-4B e Phi-4-mini; Qwen3-8B foi pulado porque Chrome estava aberto. Qwen3-4B passou agenda (15/20/30/25), Python, JSON e não invenção de contexto. Phi falhou agenda (30+25+40+45, sem unidade; total 140) e Python inválido; JSON e não-invenção passaram. Phi SWA estava desativado.
+- Phi-4-mini Q4_K_M foi baixado para `%LOCALAPPDATA%\Lia-Code\benchmark-cache\models\microsoft_Phi-4-mini-instruct-Q4_K_M.gguf`, SHA-256 verificado e registrado em `docs/RESOURCE-REGISTRY.md`.
+- Os logs de ambas as rodadas só dizem `model loaded`, sem camadas/buffers Vulkan; o uso efetivo da GPU ainda não está comprovado. Não instalar/atualizar runtime.
 - Testes de prompt Tsundere, até `prompt-v6-examples`, não produziram personalidade confiável. A resposta de autenticação ficou mais segura, mas o estilo continuou inconsistente. A bateria está preservada como opcional; aguardar a lista de personas do usuário antes de retomar.
 - Testes de prompt Tsundere, até `prompt-v6-examples`, não produziram personalidade confiável. A resposta de autenticação ficou mais segura, mas o estilo continuou inconsistente. A bateria está preservada como opcional; aguardar a lista de personas do usuário antes de retomar.
 - O usuário planeja fornecer personagens de anime para investigar personas múltiplas. Ao retomar, usar perfis comportamentais e exemplos com origem/licença clara; não presumir que dados de diálogo raspados estejam liberados.
 
 ## Próximo marco
 
-O próximo teste único é `Update-Lia.bat` sem argumentos: baixar apenas o Phi-4-mini-instruct Q4_K_M autorizado, se ainda ausente, verificar SHA-256 e comparar com o Qwen3-4B já em cache. O caminho, licença, origem e checksum ficam em [`docs/RESOURCE-REGISTRY.md`](docs/RESOURCE-REGISTRY.md) para exclusão posterior. Não instalar/atualizar runtimes; registrar e ignorar os outros candidatos sem cache. O roteiro está em [`docs/OMNI-ROADMAP.md`](docs/OMNI-ROADMAP.md).
+O próximo teste único é `Update-Lia.bat` sem argumentos: diagnóstico focado no Qwen3-4B, com logging verbose para registrar backend Vulkan, camadas e buffers, e duas amostras curtas. Não baixar pesos nem instalar/atualizar runtime. O Phi já baixado permanece registrado para remoção posterior. O roteiro está em [`docs/OMNI-ROADMAP.md`](docs/OMNI-ROADMAP.md).

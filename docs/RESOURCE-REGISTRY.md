@@ -2,7 +2,7 @@
 
 Este registro lista pesos e runtimes guardados fora do Git para que possam ser excluídos ao fim do projeto. A autorização do usuário permite ao agente baixar modelos escolhidos, desde que origem/licença/caminho sejam registrados. **Nenhum runtime/software adicional está autorizado para instalação ou atualização. Não use `git clean` para remover esses recursos.**
 
-## Phi-4-mini-instruct Q4_K_M — autorizado, pendente de download
+## Phi-4-mini-instruct Q4_K_M — baixado, hash verificado e registrado
 
 - **Uso:** comparação textual cross-family com o Qwen3-4B já em cache.
 - **Arquivo:** `microsoft_Phi-4-mini-instruct-Q4_K_M.gguf`, aproximadamente **2,49 GB**.
@@ -10,8 +10,8 @@ Este registro lista pesos e runtimes guardados fora do Git para que possam ser e
 - **Origem:** [arquivo GGUF em bartowski/microsoft_Phi-4-mini-instruct-GGUF](https://huggingface.co/bartowski/microsoft_Phi-4-mini-instruct-GGUF/blob/915429cb42fe8eba71bd1d3117a7d63070892268/microsoft_Phi-4-mini-instruct-Q4_K_M.gguf), revisão fixada `915429cb42fe8eba71bd1d3117a7d63070892268`; arquivo declarado pelo Hub com 2,49 GB.
 - **SHA-256 esperado:** `01999f17c39cc3074afae5e9c539bc82d45f2dd7faa3917c66cbef76fce8c0c2`.
 - **Licença de origem:** MIT, conforme [cartão oficial do Microsoft Phi-4-mini-instruct](https://huggingface.co/microsoft/Phi-4-mini-instruct). A procedência/licença do arquivo quantizado será revisada antes de redistribuição.
-- **Compatibilidade do runtime:** upstream llama.cpp adicionou suporte ao Phi-4-mini no [PR #12108](https://github.com/ggml-org/llama.cpp/pull/12108), mesclado em 2025-02-28; ainda precisamos verificar se o runtime Vulkan local carrega esse arquivo.
-- **Estado:** o primeiro teste não encontrou Phi no cache. Na tentativa seguinte, o download de 2,49 GB chegou à verificação e o SHA-256 foi validado, mas o Windows PowerShell 5.1 rejeitou a opção `Move-Item -NoClobber`. O temporário foi removido; nenhum peso ficou no destino. O script foi corrigido para o próximo `Update-Lia.bat`: baixar somente se ausente, exigir pelo menos 3 GiB livres, verificar SHA-256 e preservar um destino que tenha surgido durante a transferência. O teste não baixará candidatos adicionais.
+- **Compatibilidade do runtime:** upstream llama.cpp adicionou suporte ao Phi-4-mini no [PR #12108](https://github.com/ggml-org/llama.cpp/pull/12108), mesclado em 2025-02-28. O runtime Vulkan local carregou o arquivo, mas avisou `Phi SWA is currently disabled`; nenhum runtime foi atualizado.
+- **Estado:** baixado e usado nos relatórios `benchmark-results/lia-llm-comparison-20260930-072348.json` e `benchmark-results/lia-llm-comparison-20260930-082728.json`. SHA-256 verificado: `01999f17c39cc3074afae5e9c539bc82d45f2dd7faa3917c66cbef76fce8c0c2`; tamanho observado: 2.491.874.688 bytes. A primeira tentativa foi refeita após corrigir incompatibilidade com Windows PowerShell 5.1. O arquivo fica no cache até o fim do projeto; remover somente esse arquivo.
 - **Instalações:** nenhuma. O arquivo usa o llama.cpp Vulkan já presente, sem atualizá-lo.
 
 ## Modelos existentes registrados no preflight

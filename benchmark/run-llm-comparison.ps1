@@ -1,4 +1,6 @@
-﻿$ErrorActionPreference = 'Stop'
+﻿param([switch]$BaselineOnly)
+
+$ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
 $OutputEncoding = [Console]::OutputEncoding
@@ -12,11 +14,13 @@ $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 $jsonPath = Join-Path $resultsDir "lia-llm-comparison-$stamp.json"
 $logPath = Join-Path $resultsDir "lia-llm-comparison-$stamp.log"
 $issues = [System.Collections.Generic.List[string]]::new()
+$evaluationName = if ($BaselineOnly) { 'qwen3-4b-vulkan-baseline-diagnostic' } else { 'cached-cross-family-llm-comparison' }
+$evaluationPolicy = if ($BaselineOnly) { 'Run only the cached Qwen3-4B baseline and collect verbose runtime startup evidence; do not download model weights or install/update software.' } else { 'Compare cached models. The specifically authorized Phi-4-mini Q4_K_M download may be fetched with a pinned revision and SHA256 if absent; no software/runtime is installed or updated.' }
 $report = [ordered]@{
     schemaVersion = 1
-    evaluation = 'cached-cross-family-llm-comparison'
+    evaluation = $evaluationName
     createdAt = (Get-Date).ToString('o')
-    policy = 'Compare cached models. The specifically authorized Phi-4-mini Q4_K_M download may be fetched with a pinned revision and SHA256 if absent; no software/runtime is installed or updated.'
+    policy = $evaluationPolicy
     machine = [ordered]@{}
     runtime = [ordered]@{}
     candidates = @()
@@ -109,7 +113,7 @@ $phiDownloadError = $null
 
 $serverProc = $null
 try {
-    Write-RunLog 'Lia-Code — comparação LLM local; usa cache e baixa apenas o Phi-4-mini autorizado se estiver ausente. Não instala ou atualiza software.'
+    if ($BaselineOnly) { Write-RunLog 'Lia-Code — diagnóstico baseline Qwen3-4B; sem downloads de pesos e sem instalação/atualização de runtime.' } else { Write-RunLog 'Lia-Code — comparação LLM local; usa cache e baixa apenas o Phi-4-mini autorizado se estiver ausente. Não instala ou atualiza software.' }
     New-Item -ItemType Directory -Force -Path $modelCache | Out-Null
     $os = Get-CimInstance Win32_OperatingSystem -ErrorAction Stop
     $cpu = Get-CimInstance Win32_Processor -ErrorAction Stop | Select-Object -First 1
@@ -142,6 +146,16 @@ try {
         Write-RunLog "Runtime: $($versionText -join ' | ')"
         $deviceText | ForEach-Object { Write-RunLog $_ }
     }
+    $verboseFlag = $null
+    $verboseProbe = $null
+    if ($BaselineOnly) {
+        $verboseProbe = Invoke-NativeCapture $serverExe.FullName @('--help')
+        $helpText = $verboseProbe.Output -join [Environment]::NewLine
+        if ($helpText -match '(?i)--verbose(?:\s|,|$)') { $verboseFlag = '--verbose' }
+        elseif ($helpText -match '(?i)--log-verbosity(?:\s|=|$)') { $verboseFlag = '--log-verbosity 4' }
+        if ($verboseFlag) { Write-RunLog "Verbose startup logging supported; requesting $verboseFlag" }
+        else { Write-RunLog 'Runtime help did not advertise a verbose logging option; retaining default startup logs.' }
+    }
     $freeVramMiB = $null
     $deviceJoined = $deviceText -join [Environment]::NewLine
     if ($deviceJoined -match '(?i)\(([0-9,]+)\s*MiB,\s*([0-9,]+)\s*MiB\s*free\)') { $freeVramMiB = [int](($Matches[2] -replace ',', '')) }
@@ -153,9 +167,13 @@ try {
         reportedFreeVramMiBAtPreflight = $freeVramMiB
         chromeRunningAtPreflight = $chromeRunning
         deviceEnumerationOnly = $true
+        verboseStartupLoggingRequested = [bool]$verboseFlag
+        verboseStartupLoggingFlag = $verboseFlag
+        verboseHelpProbeExitCode = if ($verboseProbe) { $verboseProbe.ExitCode } else { $null }
     }
 
     $phiPath = Join-Path $modelCache $phiDownload.fileName
+    if (-not $BaselineOnly) {
     if (Test-Path -LiteralPath $phiPath) {
         $existingPhiHash = (Get-FileHash -LiteralPath $phiPath -Algorithm SHA256).Hash.ToLowerInvariant()
         if ($existingPhiHash -eq $phiDownload.sha256) {
@@ -214,7 +232,15 @@ try {
             if (Test-Path -LiteralPath $partialPhiPath) { Remove-Item -LiteralPath $partialPhiPath -Force -ErrorAction SilentlyContinue }
         }
     }
+    } else {
+        $phiDownloadStatus = 'not-requested-baseline-only'
+        Write-RunLog 'Modo baseline-only: sem leitura/verificação, download ou carregamento do Phi.'
+    }
 
+    if ($BaselineOnly) {
+        $definitions = @($definitions | Where-Object { $_.family -eq 'Qwen3-4B' })
+        $cases = @($cases | Where-Object { $_.id -in @('portugues-natural', 'codigo-python') })
+    }
     $allModels = @(Get-ChildItem -LiteralPath $modelCache -Filter '*.gguf' -File -Recurse -ErrorAction SilentlyContinue | Where-Object { -not ($phiDownloadStatus -eq 'existing-file-hash-mismatch; preserved' -and $_.FullName -eq $phiPath) })
     foreach ($definition in $definitions) {
         $match = $allModels | Where-Object { $_.Name -match $definition.pattern } |
@@ -295,6 +321,7 @@ try {
         $stderr = Join-Path $cacheRoot "llm-$($definition.family)-$stamp.stderr.log"
         try {
             $arguments = "-m `"$($match.FullName)`" -ngl 99 --ctx-size 4096 --parallel 1 --host 127.0.0.1 --port $port --no-webui"
+            if ($BaselineOnly -and $verboseFlag) { $arguments += " $verboseFlag" }
             $serverProc = Start-Process -FilePath $serverExe.FullName -ArgumentList $arguments -WorkingDirectory $serverExe.DirectoryName -PassThru -WindowStyle Hidden -RedirectStandardOutput $stdout -RedirectStandardError $stderr
             $ready = $false
             for ($i = 0; $i -lt 180; $i++) {
@@ -411,7 +438,7 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Há alterações staged; recusando commit automático.' }
     & git add -f -- "benchmark-results/$(Split-Path -Leaf $jsonPath)" "benchmark-results/$(Split-Path -Leaf $logPath)"
     if ($LASTEXITCODE -ne 0) { throw 'git add dos relatórios falhou.' }
-    & git commit -m "Add cross-family LLM comparison report $stamp"
+    & git commit -m "Add $evaluationName report $stamp"
     if ($LASTEXITCODE -ne 0) { throw 'git commit dos relatórios falhou.' }
     & git push origin arena/01a0ec89-lia-code
     if ($LASTEXITCODE -ne 0) { throw 'git push dos relatórios falhou; eles permanecem locais.' }

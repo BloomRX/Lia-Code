@@ -9,14 +9,14 @@ Desenvolver uma assistente local para a Lia com capacidades **omnimodais**: conv
 - Priorizar software e pesos gratuitos, respeitando licenças e termos dos dados.
 - Hardware-alvo inicial: Windows, Radeon RX 580 com 8 GB de VRAM. Não presumir que um modelo “3B” ou um arquivo GGUF caiba na VRAM: encoders de áudio/vídeo, contexto e buffers também consomem memória.
 - O usuário autorizou downloads de pesos escolhidos pelo agente desde que cada recurso seja registrado com origem/caminho de exclusão. Não instalar ou atualizar runtime sem confirmação. Modelos e caches ficam fora do repositório.
-- Os relatórios atuais comparam Qwen3 4B e 8B **somente em tarefas de texto**; ambos foram viáveis nos testes qualitativos, sem vantagem clara do 8B. Isso não demonstra capacidade multimodal nem confirma o número de camadas efetivamente descarregadas na GPU (`serverStartupEvidence` dos relatórios está vazio).
-- O próximo teste via `Update-Lia.bat` sem argumentos é comparar Qwen3-4B com Phi-4-mini-instruct Q4_K_M. O usuário autorizou baixar o Phi se ausente, desde que o recurso seja registrado com caminho de exclusão; outros candidatos só são usados se já estiverem em cache. Nenhum runtime será instalado/atualizado.
+- Os relatórios cross-family comparam modelos **somente em tarefas de texto**. Qwen3-4B é a recomendação provisória por resultados funcionais e menor tamanho; Qwen3-8B não mostrou vantagem clara. A execução de 2026-09-30 08:27 pulou o 8B porque Chrome estava aberto. Isso não demonstra capacidade multimodal nem confirma offload GPU: os logs registraram `model loaded`, sem camadas/buffers Vulkan.
+- O próximo teste via `Update-Lia.bat` sem argumentos é um diagnóstico focado no Qwen3-4B, com logging verbose de inicialização para buscar evidência explícita de offload Vulkan. Não baixar pesos nem instalar/atualizar runtime; manter só duas amostras curtas.
 - O preflight Omni já confirmou a enumeração Vulkan da RX 580 2048SP, mas não carregou modelo. O WMI reportou 4 GiB enquanto Vulkan enumerou 8192 MiB; essa divergência precisa ser tratada com evidência do runtime durante inferência.
 - A bateria de personalidade permanece pausada até chegar a lista de personas.
 
-## Próximo marco: escolher a base textual
+## Próximo marco: validar a base textual no runtime
 
-Comparar os LLMs em português brasileiro, seguimento de instruções, consistência, latência e evidências de memória/offload. O teste baixa apenas o Phi autorizado, verifica o SHA-256 e tenta carregá-lo no runtime existente; se o runtime não o suportar, registrar falha sem instalar outro. O caminho de todo recurso está em [`RESOURCE-REGISTRY.md`](RESOURCE-REGISTRY.md) para limpeza ao fim do projeto. Só depois de escolher a base textual retomar a matriz de compatibilidade Omni:
+Usar Qwen3-4B como baseline provisório e capturar logs detalhados do `llama-server` para confirmar se houve offload Vulkan, quantas camadas foram carregadas e quais buffers foram alocados. Sem evidência, não afirmar que o modelo executou na GPU. Essa rodada não baixa pesos nem altera o runtime; o Phi já baixado continua no [`RESOURCE-REGISTRY.md`](RESOURCE-REGISTRY.md) para limpeza posterior. Só depois de validar a base textual retomar a matriz de compatibilidade Omni:
 
 1. **Modalidades de entrada:** texto, imagem, fala, áudio não verbal e vídeo (incluindo áudio sincronizado).
 2. **Modalidades de saída:** texto e voz; qualidade e latência de fala em português brasileiro.

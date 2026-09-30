@@ -92,14 +92,20 @@ print(json.dumps(result, ensure_ascii=False))
 '@
     $nativeOutput = @()
     $nativeExitCode = $null
-    if ($pythonCommand) {
-        $report.python.executableAvailable = $true
-        $nativeOutput = @(& $pythonCommand.Source -B -c $probeCode 2>&1 | ForEach-Object { [string]$_ })
-        $nativeExitCode = $LASTEXITCODE
-    } elseif ($pythonLauncher) {
-        $report.python.executableAvailable = $true
-        $nativeOutput = @(& $pythonLauncher.Source -3 -B -c $probeCode 2>&1 | ForEach-Object { [string]$_ })
-        $nativeExitCode = $LASTEXITCODE
+    $previousErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        if ($pythonCommand) {
+            $report.python.executableAvailable = $true
+            $nativeOutput = @(& $pythonCommand.Source -B -c $probeCode 2>&1 | ForEach-Object { [string]$_ })
+            $nativeExitCode = $LASTEXITCODE
+        } elseif ($pythonLauncher) {
+            $report.python.executableAvailable = $true
+            $nativeOutput = @(& $pythonLauncher.Source -3 -B -c $probeCode 2>&1 | ForEach-Object { [string]$_ })
+            $nativeExitCode = $LASTEXITCODE
+        }
+    } finally {
+        $ErrorActionPreference = $previousErrorActionPreference
     }
     $report.python.probeExitCode = $nativeExitCode
     if ($report.python.executableAvailable -and $nativeExitCode -eq 0) {

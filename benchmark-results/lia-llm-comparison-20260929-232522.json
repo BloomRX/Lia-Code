@@ -1,0 +1,211 @@
+﻿{
+    "schemaVersion":  1,
+    "evaluation":  "cached-cross-family-llm-comparison",
+    "createdAt":  "2026-09-29T23:25:22.2362027-03:00",
+    "policy":  "Use cached models only; no download or installation is performed.",
+    "machine":  {
+                    "os":  "Microsoft Windows 11 Home",
+                    "osBuild":  "26200",
+                    "cpu":  "AMD Ryzen 5 5500",
+                    "installedRamGiB":  15.89,
+                    "freeRamGiBAtStart":  4.36
+                },
+    "runtime":  {
+                    "path":  "%USERPROFILE%\\AppData\\Local\\Lia-Code\\benchmark-cache\\llama-b11249-vulkan\\llama-server.exe",
+                    "versionOutput":  [
+                                          "version: 0.5.0-dev (build 11249, commit 6d78fb072)",
+                                          "built with Clang 20.1.8 for Windows x86_64"
+                                      ],
+                    "deviceEnumeration":  [
+                                              "Available devices:",
+                                              "  Vulkan0: AMD Radeon RX 580 2048SP (8192 MiB, 7367 MiB free)"
+                                          ],
+                    "reportedFreeVramMiBAtPreflight":  7367,
+                    "chromeRunningAtPreflight":  true,
+                    "deviceEnumerationOnly":  true
+                },
+    "candidates":  [
+                       {
+                           "family":  "Qwen3-4B",
+                           "repository":  "Qwen/Qwen3-4B",
+                           "declaredLicense":  "Apache-2.0",
+                           "purpose":  "baseline já testado anteriormente",
+                           "cached":  true,
+                           "fileName":  "Qwen_Qwen3-4B-Instruct-2507-Q4_K_M.gguf",
+                           "sizeGiB":  2.33,
+                           "result":  "tested",
+                           "memoryPreflight":  {
+                                                   "modelFileMiB":  2382,
+                                                   "reserveMiBForGpuContextAndOtherUse":  2560,
+                                                   "reportedFreeVramMiB":  7367,
+                                                   "reserveMiBForSystemRam":  1024,
+                                                   "reportedFreeRamGiB":  4.36,
+                                                   "chromeRunning":  true,
+                                                   "note":  "Conservative screening heuristic only; actual model memory use is taken from runtime startup evidence, not inferred from file size."
+                                               },
+                           "cases":  [
+                                         {
+                                             "id":  "portugues-natural",
+                                             "prompt":  "Explique em exatamente três frases a diferença entre memória RAM e VRAM, usando uma analogia simples.",
+                                             "response":  "A memória RAM é como o espaço de trabalho de um escritório: você pode armazenar muitas coisas, mas só pode trabalhar com algumas de vez, e tudo precisa ser carregado para o local de trabalho.  \nA VRAM é como o espaço de trabalho de uma câmara de fotos: ela só armazena as imagens que estão sendo usadas no momento, e é especial para processar gráficos e imagens.  \nRAM serve para todo o sistema, enquanto VRAM é só para o processamento de imagens e jogos gráficos.",
+                                             "elapsedSeconds":  5.99,
+                                             "completionTokens":  123,
+                                             "finishReason":  "stop",
+                                             "automaticChecks":  {
+
+                                                                 },
+                                             "humanReviewGuide":  "Revisão humana: naturalidade em português, precisão e exatamente três frases.",
+                                             "error":  null
+                                         },
+                                         {
+                                             "id":  "planejamento-com-restricoes",
+                                             "prompt":  "Tenho 90 minutos. Monte exatamente quatro linhas numeradas para responder um e-mail urgente, revisar um pull request importante, começar um relatório que vence hoje e fazer uma pausa/transição. Some exatamente 90 minutos e dê uma justificativa curta por linha.",
+                                             "response":  "1. **00:00–00:30** – Responda o e-mail urgente com foco em ações claras e prontas, priorizando mensagens que exigem resposta imediata.  \n2. **00:30–01:30** – Revisar o pull request importante, validando código, testes e alinhamento com a documentação.  \n3. **01:30–06:30** – Começar o relatório que vence hoje, estruturando os dados principais e definindo os pontos-chave a serem destacados.  \n4. **06:30–07:00** – Faça uma pausa curta para respirar, se mover e reorganizar o foco mental antes de encerrar o dia com clareza.  \n\n*Total: 90 minutos.*",
+                                             "elapsedSeconds":  9.63,
+                                             "completionTokens":  197,
+                                             "finishReason":  "stop",
+                                             "automaticChecks":  {
+                                                                     "durationCount":  0,
+                                                                     "durationsMinutes":  [
+
+                                                                                          ],
+                                                                     "totalIs90":  false
+                                                                 },
+                                             "humanReviewGuide":  "Automático: quatro durações em minutos somando 90. Humano: prioridades e justificativas sensatas.",
+                                             "error":  null
+                                         },
+                                         {
+                                             "id":  "codigo-python",
+                                             "prompt":  "Escreva somar_pares(valores: list[int]) -\u003e int em Python 3 para somar apenas números pares. Inclua três asserts cobrindo lista vazia, valores mistos e números negativos.",
+                                             "response":  "```python\ndef somar_pares(valores: list[int]) -\u003e int:\n    \"\"\"\n    Soma apenas os números pares da lista de valores.\n    \"\"\"\n    total = 0\n    for valor in valores:\n        if valor % 2 == 0:\n            total += valor\n    return total\n\n# Testes com asserts\nassert somar_pares([]) == 0, \"Lista vazia deve retornar 0\"\nassert somar_pares([1, 2, 3, 4, 5]) == 6, \"Valores mistos: 2 + 4 = 6\"\nassert somar_pares([-2, -3, -4, 1, 5]) == -6, \"Números negativos: -2 + (-4) = -6\"\n```",
+                                             "elapsedSeconds":  8.47,
+                                             "completionTokens":  173,
+                                             "finishReason":  "stop",
+                                             "automaticChecks":  {
+
+                                                                 },
+                                             "humanReviewGuide":  "Humano: correção, assinatura e cobertura dos três casos.",
+                                             "error":  null
+                                         },
+                                         {
+                                             "id":  "json-exato",
+                                             "prompt":  "Retorne um objeto JSON com exatamente estas chaves: \"prioridade\", \"proxima_acao\", \"risco\". Use strings curtas em português. Situação: ainda precisamos comparar a qualidade e o uso de memória de vários LLMs locais.",
+                                             "response":  "{\"prioridade\": \"alta\", \"proxima_acao\": \"comparar LLMs\", \"risco\": \"baixo\"}",
+                                             "elapsedSeconds":  2.03,
+                                             "completionTokens":  30,
+                                             "finishReason":  "stop",
+                                             "automaticChecks":  {
+                                                                     "jsonValid":  true,
+                                                                     "exactKeys":  true,
+                                                                     "valuesAreStrings":  true
+                                                                 },
+                                             "humanReviewGuide":  "Automático: JSON válido, chaves exatas e todos os valores string.",
+                                             "error":  null
+                                         },
+                                         {
+                                             "id":  "nao-inventar-contexto",
+                                             "prompt":  "Qual é o nome do meu cachorro e em que cidade ele nasceu?",
+                                             "response":  "Não foi informada nenhuma informação sobre o nome do seu cachorro nem sobre a cidade onde ele nasceu.",
+                                             "elapsedSeconds":  1.61,
+                                             "completionTokens":  25,
+                                             "finishReason":  "stop",
+                                             "automaticChecks":  {
+
+                                                                 },
+                                             "humanReviewGuide":  "Humano: não inventar nome, cidade ou lembrança.",
+                                             "error":  null
+                                         }
+                                     ],
+                           "startupEvidence":  [
+
+                                               ],
+                           "error":  null
+                       },
+                       {
+                           "family":  "Qwen3-8B",
+                           "repository":  "Qwen/Qwen3-8B",
+                           "declaredLicense":  "Apache-2.0",
+                           "purpose":  "comparação de escala",
+                           "cached":  true,
+                           "fileName":  "Qwen_Qwen3-8B-Q4_K_M.gguf",
+                           "sizeGiB":  4.68,
+                           "result":  "skipped-system-ram-headroom",
+                           "memoryPreflight":  {
+                                                   "modelFileMiB":  4795,
+                                                   "reserveMiBForGpuContextAndOtherUse":  2560,
+                                                   "reportedFreeVramMiB":  7367,
+                                                   "reserveMiBForSystemRam":  1024,
+                                                   "reportedFreeRamGiB":  4.36,
+                                                   "chromeRunning":  true,
+                                                   "note":  "Conservative screening heuristic only; actual model memory use is taken from runtime startup evidence, not inferred from file size."
+                                               },
+                           "cases":  [
+
+                                     ],
+                           "startupEvidence":  [
+
+                                               ],
+                           "error":  "Candidate file size plus the 1 GiB system reserve exceeds free RAM; skipped to reduce memory pressure."
+                       },
+                       {
+                           "family":  "Phi-4-mini-instruct",
+                           "repository":  "microsoft/Phi-4-mini-instruct",
+                           "declaredLicense":  "MIT",
+                           "purpose":  "alternativa de outra família, texto",
+                           "cached":  false,
+                           "fileName":  null,
+                           "sizeGiB":  null,
+                           "result":  "not-cached; skipped without download",
+                           "memoryPreflight":  null,
+                           "cases":  [
+
+                                     ],
+                           "startupEvidence":  [
+
+                                               ],
+                           "error":  null
+                       },
+                       {
+                           "family":  "Granite-3.3-2B-Instruct",
+                           "repository":  "ibm-granite/granite-3.3-2b-instruct",
+                           "declaredLicense":  "Apache-2.0",
+                           "purpose":  "alternativa compacta, texto",
+                           "cached":  false,
+                           "fileName":  null,
+                           "sizeGiB":  null,
+                           "result":  "not-cached; skipped without download",
+                           "memoryPreflight":  null,
+                           "cases":  [
+
+                                     ],
+                           "startupEvidence":  [
+
+                                               ],
+                           "error":  null
+                       },
+                       {
+                           "family":  "Mistral-7B-Instruct-v0.3",
+                           "repository":  "mistralai/Mistral-7B-Instruct-v0.3",
+                           "declaredLicense":  "Apache-2.0",
+                           "purpose":  "alternativa maior, texto",
+                           "cached":  false,
+                           "fileName":  null,
+                           "sizeGiB":  null,
+                           "result":  "not-cached; skipped without download",
+                           "memoryPreflight":  null,
+                           "cases":  [
+
+                                     ],
+                           "startupEvidence":  [
+
+                                               ],
+                           "error":  null
+                       }
+                   ],
+    "notes":  [
+                  "This is a text-only screening. Human review is required; the script does not choose a winner automatically.",
+                  "Model files are selected by filename from the Lia-Code cache. No files are removed or modified.",
+                  "GPU device enumeration and startup logs are evidence, not a measurement of peak VRAM under inference.",
+                  "As medições de tempo são de ponta a ponta por prompt e variam com carga do sistema. Revisar manualmente todas as respostas antes de escolher o LLM-base."
+              ]
+}

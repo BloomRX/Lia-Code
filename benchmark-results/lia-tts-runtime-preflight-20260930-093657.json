@@ -1,0 +1,60 @@
+﻿{
+    "schemaVersion":  1,
+    "evaluation":  "neural-tts-runtime-availability-preflight",
+    "createdAt":  "2026-09-30T09:36:57.2946100-03:00",
+    "policy":  "Inventory already-present Python/ONNX/PyTorch/eSpeak components and matching local model files only. No network access, weight download, package installation, runtime update, or synthesis.",
+    "machine":  {
+                    "os":  "Microsoft Windows 11 Home",
+                    "osBuild":  "26200",
+                    "powershellVersion":  "5.1.26100.9444",
+                    "systemCulture":  "pt-BR"
+                },
+    "commands":  {
+                     "python.exe":  {
+                                        "available":  true,
+                                        "commandType":  "Application"
+                                    },
+                     "py.exe":  {
+                                    "available":  true,
+                                    "commandType":  "Application"
+                                },
+                     "espeak-ng.exe":  {
+                                           "available":  false,
+                                           "commandType":  null
+                                       },
+                     "espeak.exe":  {
+                                        "available":  false,
+                                        "commandType":  null
+                                    }
+                 },
+    "python":  {
+                   "executableAvailable":  true,
+                   "version":  null,
+                   "probeExitCode":  null,
+                   "modules":  {
+
+                               },
+                   "onnxRuntimeVersion":  null,
+                   "onnxExecutionProviders":  [
+
+                                              ],
+                   "probeError":  null
+               },
+    "modelCache":  {
+                       "piperFaberOnnxFiles":  [
+
+                                               ],
+                       "kokoroLikelyFiles":  [
+
+                                             ],
+                       "scannedOutsideRepository":  true
+                   },
+    "routeAssessment":  {
+
+                        },
+    "notes":  [
+                  "The rejected Microsoft Maria SAPI sample is not treated as the neural TTS candidate.",
+                  "Availability is detected without importing PyTorch, downloading models, contacting package indexes, or installing/updating software.",
+                  "A detected runtime or file is not proof of successful inference, quality, or a valid license; a later explicit test is still required."
+              ]
+}

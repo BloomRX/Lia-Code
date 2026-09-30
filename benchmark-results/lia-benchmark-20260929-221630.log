@@ -1,0 +1,42 @@
+﻿**********************
+Início da transcrição do Windows PowerShell
+Hora de início: 20260929221630
+Nome de Usuário: [redacted]
+Executar como Usuário: [redacted]
+Nome da Configuração: 
+Computador: [redacted]
+Aplicativo Host: powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File J:\Lia-Code\benchmark\run-benchmark.ps1
+ID do Processo: 8084
+PSVersion: 5.1.26100.9444
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.9444
+BuildVersion: 10.0.26100.9444
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Lia-Code - preflight de viabilidade Omni
+Nenhum modelo será baixado, instalado ou executado nesta etapa.
+Coletando hardware, runtimes, dispositivos enumerados e modelos Omni já existentes...
+
+Sistema: Microsoft Windows 11 Home (build 26200)
+CPU: AMD Ryzen 5 5500 | RAM: 15.89 GiB
+GPU: Parsec Virtual Display Adapter | Driver: 0.45.0.0 | VRAM reportada:  GiB
+GPU: AMD Radeon RX 580 2048SP | Driver: 31.0.21925.1001 | VRAM reportada: 4 GiB
+
+Ollama não encontrado. Nenhum runtime será instalado nesta etapa.
+
+Enumerando os dispositivos vistos pelo llama.cpp (sem carregar modelo)...
+Available devices:
+  Vulkan0: AMD Radeon RX 580 2048SP (8192 MiB, 7367 MiB free)
+
+Concluído. Arquivos gerados:
+  Log:     J:\Lia-Code\benchmark-results\lia-benchmark-20260929-221630.log
+  Relatório: J:\Lia-Code\benchmark-results\lia-benchmark-20260929-221630.json
+Envie os dois arquivos para investigarmos o próximo passo.
+**********************
+Fim da transcrição do Windows PowerShell
+Hora de término: 20260929221633
+**********************
+

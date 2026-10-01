@@ -1,0 +1,37 @@
+Lia-Code inference benchmark | 20260929-075744
+Lia-Code - benchmark local de inferência
+Vai baixar um runtime Vulkan e um modelo GGUF (~2,5 GB para o modelo).
+Cache: %USERPROFILE%\AppData\Local\Lia-Code\benchmark-cache
+Espaço livre no drive do cache: 210,7 GB
+Runtime em cache reutilizado.
+Modelo em cache reutilizado.
+
+Dispositivos reportados pelo llama.cpp:
+Available devices:
+  Vulkan0: AMD Radeon RX 580 2048SP (8192 MiB, 7367 MiB free)
+
+=== CPU baseline (GPU layers: 0) ===
+load_backend: loaded RPC backend from %USERPROFILE%\AppData\Local\Lia-Code\benchmark-cache\llama-b11249-vulkan\ggml-rpc.dll
+ggml_vulkan: Found 1 Vulkan devices:
+ggml_vulkan: 0 = AMD Radeon RX 580 2048SP (AMD proprietary driver) | uma: 0 | fp16: 0 | bf16: 0 | fp4: 0 | warp size: 64 | shared memory: 32768 | int dot: 0 | matrix cores: none
+load_backend: loaded Vulkan backend from %USERPROFILE%\AppData\Local\Lia-Code\benchmark-cache\llama-b11249-vulkan\ggml-vulkan.dll
+load_backend: loaded CPU backend from %USERPROFILE%\AppData\Local\Lia-Code\benchmark-cache\llama-b11249-vulkan\ggml-cpu-haswell.dll
+| model                          |       size |     params | backend    | ngl |            test |                  t/s |
+| ------------------------------ | ---------: | ---------: | ---------- | --: | --------------: | -------------------: |
+| qwen3 4B Q4_K - Medium         |   2.32 GiB |     4.02 B | Vulkan     |   0 |           pp256 |        114.21 ± 0.41 |
+| qwen3 4B Q4_K - Medium         |   2.32 GiB |     4.02 B | Vulkan     |   0 |            tg64 |          5.87 ± 0.00 |
+
+build: 6d78fb072 (11249)
+
+=== Vulkan GPU offload (GPU layers: 99) ===
+load_backend: loaded RPC backend from %USERPROFILE%\AppData\Local\Lia-Code\benchmark-cache\llama-b11249-vulkan\ggml-rpc.dll
+ggml_vulkan: Found 1 Vulkan devices:
+ggml_vulkan: 0 = AMD Radeon RX 580 2048SP (AMD proprietary driver) | uma: 0 | fp16: 0 | bf16: 0 | fp4: 0 | warp size: 64 | shared memory: 32768 | int dot: 0 | matrix cores: none
+load_backend: loaded Vulkan backend from %USERPROFILE%\AppData\Local\Lia-Code\benchmark-cache\llama-b11249-vulkan\ggml-vulkan.dll
+load_backend: loaded CPU backend from %USERPROFILE%\AppData\Local\Lia-Code\benchmark-cache\llama-b11249-vulkan\ggml-cpu-haswell.dll
+| model                          |       size |     params | backend    | ngl |            test |                  t/s |
+| ------------------------------ | ---------: | ---------: | ---------- | --: | --------------: | -------------------: |
+| qwen3 4B Q4_K - Medium         |   2.32 GiB |     4.02 B | Vulkan     |  99 |           pp256 |        142.47 ± 0.24 |
+| qwen3 4B Q4_K - Medium         |   2.32 GiB |     4.02 B | Vulkan     |  99 |            tg64 |         19.99 ± 0.00 |
+
+build: 6d78fb072 (11249)

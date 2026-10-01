@@ -1,0 +1,73 @@
+﻿Lia-Code — comparação LLM local; usa cache e baixa apenas o Phi-4-mini autorizado se estiver ausente. Não instala ou atualiza software.
+Sistema: Microsoft Windows 11 Home | CPU: AMD Ryzen 5 5500 | RAM livre inicial: 10.59 GiB
+Runtime: version: 0.5.0-dev (build 11249, commit 6d78fb072) | built with Clang 20.1.8 for Windows x86_64
+Available devices:
+  Vulkan0: AMD Radeon RX 580 2048SP (8192 MiB, 7367 MiB free)
+Baixando somente Phi-4-mini-instruct Q4_K_M, autorizado pelo usuário (aprox. 2,49 GB), para o cache externo...
+Download Phi-4-mini falhou: Não é possível localizar um parâmetro que coincida com o nome de parâmetro 'NoClobber'.
+
+===== Qwen3-4B | Qwen_Qwen3-4B-Instruct-2507-Q4_K_M.gguf | 2.33 GiB =====
+portugues-natural: 6.75s; tokens=123; finish=stop
+A memória RAM é como o espaço de trabalho de um escritório: você pode armazenar muitas coisas, mas só pode trabalhar com algumas de vez, e tudo precisa ser carregado para o local de trabalho.  
+A VRAM é como o espaço de trabalho de uma câmara de fotos: ela só armazena as imagens que estão sendo usadas no momento, e é especial para processar gráficos e imagens.  
+RAM serve para todo o sistema, enquanto VRAM é só para o processamento de imagens e jogos gráficos.
+planejamento-com-restricoes: 6.16s; tokens=105; finish=stop
+15 min — responder um e-mail urgente — prioridade imediata para manter a fluidez do trabalho.  
+20 min — revisar um pull request importante — garantir qualidade e integridade do código.  
+45 min — começar um relatório que vence hoje — tempo suficiente para estruturar e desenvolver o conteúdo essencial.  
+10 min — pausa/transição — recarregar mentalmente para manter a produtividade e foco.
+Checagens: {"durationCount":0,"durationsMinutes":[],"totalIs90":false}
+codigo-python: 9.24s; tokens=173; finish=stop
+```python
+def somar_pares(valores: list[int]) -> int:
+    """
+    Soma apenas os números pares da lista de valores.
+    """
+    total = 0
+    for valor in valores:
+        if valor % 2 == 0:
+            total += valor
+    return total
+
+# Testes com asserts
+assert somar_pares([]) == 0, "Lista vazia deve retornar 0"
+assert somar_pares([1, 2, 3, 4, 5]) == 6, "Valores mistos: 2 + 4 = 6"
+assert somar_pares([-2, -3, -4, 1, 5]) == -6, "Números negativos: -2 + (-4) = -6"
+```
+json-exato: 2.2s; tokens=30; finish=stop
+{"prioridade": "alta", "proxima_acao": "comparar LLMs", "risco": "baixo"}
+Checagens: {"jsonValid":true,"exactKeys":true,"valuesAreStrings":true}
+nao-inventar-contexto: 1.7s; tokens=25; finish=stop
+Não foi informada nenhuma informação sobre o nome do seu cachorro nem sobre a cidade onde ele nasceu.
+
+===== Qwen3-8B | Qwen_Qwen3-8B-Q4_K_M.gguf | 4.68 GiB =====
+portugues-natural: 7.27s; tokens=99; finish=stop
+A memória RAM é como a memória temporária do seu computador, usada para executar programas e processar dados enquanto você trabalha. A VRAM, por sua vez, é a memória dedicada à placa de vídeo, usada para armazenar e processar imagens e gráficos. É como se a RAM fosse a memória do seu quarto e a VRAM fosse a memória do seu computador de jogos.
+planejamento-com-restricoes: 6.91s; tokens=82; finish=stop
+1 min — pausa/transição — para manter a produtividade e evitar burnout  
+20 min — responder e-mail urgente — priorizar tarefa crítica e imediata  
+30 min — revisar pull request importante — garantir qualidade e alinhamento  
+39 min — começar relatório que vence hoje — evitar atrasos e garantir entrega pontual
+Checagens: {"durationCount":0,"durationsMinutes":[],"totalIs90":false}
+codigo-python: 9.89s; tokens=140; finish=stop
+```python
+def somar_pares(valores: list[int]) -> int:
+    return sum(num for num in valores if num % 2 == 0)
+
+# Asserts de teste
+assert somar_pares([]) == 0, "A lista vazia deve retornar 0"
+assert somar_pares([1, 2, 3, 4, 5]) == 6, "Valores mistos: apenas 2 e 4 são pares"
+assert somar_pares([-2, -3, -4, -5]) == -6, "Números negativos: -2 e -4 são pares"
+```
+json-exato: 3.69s; tokens=38; finish=stop
+{
+  "prioridade": "alta",
+  "proxima_acao": "realizar testes",
+  "risco": "desempenho inadequado"
+}
+Checagens: {"jsonValid":true,"exactKeys":true,"valuesAreStrings":true}
+nao-inventar-contexto: 1.32s; tokens=9; finish=stop
+Essa informação não foi informada.
+SKIP Phi-4-mini-instruct: Não é possível localizar um parâmetro que coincida com o nome de parâmetro 'NoClobber'.
+SKIP Granite-3.3-2B-Instruct: nenhum GGUF correspondente no cache; sem download autorizado para essa família.
+SKIP Mistral-7B-Instruct-v0.3: nenhum GGUF correspondente no cache; sem download autorizado para essa família.

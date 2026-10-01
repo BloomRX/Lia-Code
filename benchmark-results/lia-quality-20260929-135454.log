@@ -1,0 +1,41 @@
+Lia-Code quality evaluation | 20260929-135454
+Lia-Code - avaliação qualitativa local (8B Q4_K_M)
+Iniciando servidor local apenas em 127.0.0.1:59524 com offload Vulkan.
+Servidor pronto; enviando quatro casos fixos de avaliação.
+
+=== Caso: casual-tsundere | modo: Casual ===
+Tempo: 4,67s | tokens reportados: 53 | finish: stop | limite atingido: False | resposta vazia: False | canal de raciocínio presente: False
+Resposta:
+Que legal, você tá fazendo progresso! A GPU ser mais rápida que a CPU é normal, já que ela é feita pra processar gráficos. Mas cuidado pra não esquentar demais a placa, tá? 😎
+
+=== Caso: serio-priorizacao | modo: Sério ===
+Tempo: 7,28s | tokens reportados: 99 | finish: stop | limite atingido: False | resposta vazia: False | canal de raciocínio presente: False
+Resposta:
+1. Responder e-mail urgente – 15 minutos: Priorizar comunicação crítica.  
+2. Revisar pull request importante – 25 minutos: Garantir qualidade e alinhamento.  
+3. Começar relatório que vence hoje – 30 minutos: Manter prazos e produtividade.  
+4. Reservar pausa/transição – 20 minutos: Manter foco e evitar burnout.
+Linhas de agenda com minutos: 4; durações: 15, 25, 30, 20; soma 90: True
+
+=== Caso: codigo-python | modo: Trabalho / programação ===
+Tempo: 9,17s | tokens reportados: 140 | finish: stop | limite atingido: False | resposta vazia: False | canal de raciocínio presente: False
+Resposta:
+```python
+def somar_pares(valores: list[int]) -> int:
+    return sum(num for num in valores if num % 2 == 0)
+
+# Asserts para testes
+assert somar_pares([]) == 0, "A lista vazia deve retornar 0"
+assert somar_pares([1, 2, 3, 4, 5]) == 6, "Valores mistos: 2 + 4 = 6"
+assert somar_pares([-2, -3, -4, -5]) == -6, "Números negativos: -2 + -4 = -6"
+```
+
+=== Caso: json-instructions | modo: Seguimento de instruções ===
+Tempo: 3,54s | tokens reportados: 40 | finish: stop | limite atingido: False | resposta vazia: False | canal de raciocínio presente: False
+Resposta:
+{
+  "prioridade": "alta",
+  "proxima_acao": "avaliar qualidade das respostas",
+  "risco": "qualidade não confirmada"
+}
+JSON parseável: True; chaves exatas: True; valores string: True

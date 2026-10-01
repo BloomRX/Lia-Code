@@ -1,0 +1,37 @@
+**********************
+Início da transcrição do Windows PowerShell
+Hora de início: 20260929071718
+Nome de Usuário: [redacted]
+Executar como Usuário: [redacted]
+Nome da Configuração: 
+Computador: [redacted]
+Aplicativo Host: powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File J:\Lia-Code\benchmark\run-benchmark.ps1
+ID do Processo: 7132
+PSVersion: 5.1.26100.9444
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.9444
+BuildVersion: 10.0.26100.9444
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Lia-Code - diagnÃ³stico inicial de benchmark
+Nenhum modelo serÃ¡ baixado ou instalado.
+Coletando informaÃ§Ãµes do sistema...
+
+Sistema: Microsoft Windows 11 Home (build 26200)
+CPU: AMD Ryzen 5 5500 | RAM: 15.89 GiB
+GPU: Parsec Virtual Display Adapter | Driver: 0.45.0.0 | VRAM reportada:  GiB
+GPU: AMD Radeon RX 580 2048SP | Driver: 31.0.21925.1001 | VRAM reportada: 4 GiB
+
+Ollama nÃ£o encontrado. Nenhum runtime serÃ¡ instalado nesta etapa.
+
+ConcluÃ­do. Arquivos gerados:
+  Log:     J:\Lia-Code\benchmark-results\lia-benchmark-20260929-071718.log
+  RelatÃ³rio: J:\Lia-Code\benchmark-results\lia-benchmark-20260929-071718.json
+Envie os dois arquivos para investigarmos o prÃ³ximo passo.
+**********************
+Fim da transcrição do Windows PowerShell
+Hora de término: 20260929071720
+**********************

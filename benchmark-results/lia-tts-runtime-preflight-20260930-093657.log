@@ -1,0 +1,6 @@
+﻿Lia-Code — diagnóstico de runtimes TTS neurais já presentes; sem downloads nem instalações.
+Comando python.exe: True
+Comando py.exe: True
+Comando espeak-ng.exe: False
+Comando espeak.exe: False
+Erro no diagnóstico: Traceback (most recent call last):

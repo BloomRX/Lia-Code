@@ -1,0 +1,27 @@
+﻿{
+    "schemaVersion":  1,
+    "createdAt":  "2026-09-29T07:54:47.6955424-03:00",
+    "model":  {
+                  "name":  "Qwen_Qwen3-4B-Instruct-2507-Q4_K_M.gguf",
+                  "repository":  "bartowski/Qwen_Qwen3-4B-Instruct-2507-GGUF",
+                  "revision":  "5ba9dff45461e5bab86959be7d585609fe9e6bc3",
+                  "quantization":  "Q4_K_M",
+                  "sourceLicense":  "Apache-2.0 (upstream Qwen model; verify repository notices)"
+              },
+    "runtime":  {
+                    "name":  "llama.cpp Vulkan",
+                    "release":  "b11249"
+                },
+    "deviceEnumeration":  [
+                              "Available devices:",
+                              "  Vulkan0: AMD Radeon RX 580 2048SP (8192 MiB, 7367 MiB free)"
+                          ],
+    "tests":  [
+
+              ],
+    "notes":  [
+                  "Initial local inference benchmark; measures throughput only, not answer quality.",
+                  "The model and runtime are downloaded to the user LocalAppData cache, not into the Git repository.",
+                  "ERROR during CPU baseline benchmark: load_backend: loaded RPC backend from C:\\Users\\lucas\\AppData\\Local\\Lia-Code\\benchmark-cache\\llama-b11249-vulkan\\ggml-rpc.dll"
+              ]
+}

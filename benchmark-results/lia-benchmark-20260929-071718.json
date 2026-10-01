@@ -1,0 +1,54 @@
+{
+    "schemaVersion":  1,
+    "createdAt":  "2026-09-29T07:17:18.5918726-03:00",
+    "machine":  {
+                    "os":  "Microsoft Windows 11 Home",
+                    "osVersion":  "10.0.26200",
+                    "osBuild":  "26200",
+                    "architecture":  "AMD64",
+                    "cpu":  "AMD Ryzen 5 5500",
+                    "cpuCores":  6,
+                    "cpuLogicalProcessors":  12,
+                    "installedRamGiB":  15.89,
+                    "freeRamGiBAtStart":  8.45
+                },
+    "software":  {
+                     "powershell":  "5.1.26100.9444",
+                     "python":  "%USERPROFILE%\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+                     "git":  "C:\\Program Files\\Git\\cmd\\git.exe",
+                     "ollama":  null,
+                     "dxdiag":  true
+                 },
+    "accelerators":  [
+                         {
+                             "name":  "Parsec Virtual Display Adapter",
+                             "driverVersion":  "0.45.0.0",
+                             "driverDate":  "\/Date(1706140800000)\/",
+                             "reportedVramGiB":  null,
+                             "videoProcessor":  null
+                         },
+                         {
+                             "name":  "AMD Radeon RX 580 2048SP",
+                             "driverVersion":  "31.0.21925.1001",
+                             "driverDate":  "\/Date(1779235200000)\/",
+                             "reportedVramGiB":  4,
+                             "videoProcessor":  "AMD Radeon Graphics Processor (0x6FDF)"
+                         }
+                     ],
+    "runtimes":  {
+                     "ollama":  {
+                                    "detected":  false,
+                                    "localModels":  null
+                                },
+                     "llamaCpp":  {
+                                      "llama-bench":  null,
+                                      "llama-server":  null,
+                                      "llama-cli":  null
+                                  }
+                 },
+    "notes":  [
+                  "llama.cpp nÃ£o foi encontrado no PATH; o teste inicial apenas identifica hardware e software. Nenhum modelo foi executado.",
+                  "VRAM via WMI pode estar ausente ou incorreta; serÃ¡ validada com ferramentas do runtime escolhido.",
+                  "Este Ã© o benchmark de reconhecimento do ambiente (fase 0), nÃ£o um teste comparativo de qualidade/velocidade de LLM."
+              ]
+}

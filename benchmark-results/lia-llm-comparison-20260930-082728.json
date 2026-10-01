@@ -1,0 +1,312 @@
+﻿{
+    "schemaVersion":  1,
+    "evaluation":  "cached-cross-family-llm-comparison",
+    "createdAt":  "2026-09-30T08:27:28.1776735-03:00",
+    "policy":  "Compare cached models. The specifically authorized Phi-4-mini Q4_K_M download may be fetched with a pinned revision and SHA256 if absent; no software/runtime is installed or updated.",
+    "machine":  {
+                    "os":  "Microsoft Windows 11 Home",
+                    "osBuild":  "26200",
+                    "cpu":  "AMD Ryzen 5 5500",
+                    "installedRamGiB":  15.89,
+                    "freeRamGiBAtStart":  6.51
+                },
+    "runtime":  {
+                    "path":  "%USERPROFILE%\\AppData\\Local\\Lia-Code\\benchmark-cache\\llama-b11249-vulkan\\llama-server.exe",
+                    "versionOutput":  [
+                                          "version: 0.5.0-dev (build 11249, commit 6d78fb072)",
+                                          "built with Clang 20.1.8 for Windows x86_64"
+                                      ],
+                    "deviceEnumeration":  [
+                                              "Available devices:",
+                                              "  Vulkan0: AMD Radeon RX 580 2048SP (8192 MiB, 7367 MiB free)"
+                                          ],
+                    "reportedFreeVramMiBAtPreflight":  7367,
+                    "chromeRunningAtPreflight":  true,
+                    "deviceEnumerationOnly":  true
+                },
+    "candidates":  [
+                       {
+                           "family":  "Qwen3-4B",
+                           "repository":  "Qwen/Qwen3-4B",
+                           "declaredLicense":  "Apache-2.0",
+                           "purpose":  "baseline já testado anteriormente",
+                           "cached":  true,
+                           "fileName":  "Qwen_Qwen3-4B-Instruct-2507-Q4_K_M.gguf",
+                           "sizeGiB":  2.33,
+                           "result":  "tested",
+                           "memoryPreflight":  {
+                                                   "modelFileMiB":  2382,
+                                                   "reserveMiBForGpuContextAndOtherUse":  2560,
+                                                   "reportedFreeVramMiB":  7367,
+                                                   "reserveMiBForSystemRam":  1024,
+                                                   "reportedFreeRamGiB":  6.51,
+                                                   "chromeRunning":  true,
+                                                   "note":  "Conservative screening heuristic only; actual model memory use is taken from runtime startup evidence, not inferred from file size."
+                                               },
+                           "cases":  [
+                                         {
+                                             "id":  "portugues-natural",
+                                             "prompt":  "Explique em exatamente três frases a diferença entre memória RAM e VRAM, usando uma analogia simples.",
+                                             "response":  "A memória RAM é como o espaço de trabalho de um escritório: você pode armazenar muitas coisas, mas só pode trabalhar com algumas de vez, e tudo precisa ser carregado para o local de trabalho.  \nA VRAM é como o espaço de trabalho de uma câmara de fotos: ela só armazena as imagens que estão sendo usadas no momento, e é especial para processar gráficos e imagens.  \nRAM serve para todo o sistema, enquanto VRAM é só para o processamento de imagens e jogos gráficos.",
+                                             "elapsedSeconds":  6,
+                                             "completionTokens":  123,
+                                             "finishReason":  "stop",
+                                             "automaticChecks":  {
+
+                                                                 },
+                                             "humanReviewGuide":  "Revisão humana: naturalidade em português, precisão e exatamente três frases.",
+                                             "error":  null
+                                         },
+                                         {
+                                             "id":  "planejamento-com-restricoes",
+                                             "prompt":  "Distribua 90 minutos entre: responder um e-mail urgente, revisar um pull request importante, começar um relatório que vence hoje e fazer uma pausa/transição. Responda em exatamente quatro linhas numeradas no formato “1. N min — tarefa — justificativa”, usando 1, 2, 3 e 4 em sequência; N deve ser um número inteiro de minutos, sem horários nem intervalos. Os quatro números precisam somar exatamente 90.",
+                                             "response":  "1. 15 min — responder um e-mail urgente — prioridade imediata para evitar atrasos operacionais.  \n2. 20 min — revisar um pull request importante — garantir integridade do código antes da merge.  \n3. 30 min — começar um relatório que vence hoje — tempo necessário para coletar dados e estruturar o conteúdo.  \n4. 25 min — pausa/transição — recarregar energia e organizar pensamentos para tarefas futuras.",
+                                             "elapsedSeconds":  6.25,
+                                             "completionTokens":  115,
+                                             "finishReason":  "stop",
+                                             "automaticChecks":  {
+                                                                     "durationCount":  4,
+                                                                     "durationsMinutes":  [
+                                                                                              15,
+                                                                                              20,
+                                                                                              30,
+                                                                                              25
+                                                                                          ],
+                                                                     "totalIs90":  true
+                                                                 },
+                                             "humanReviewGuide":  "Automático: quatro durações em minutos somando 90. Humano: prioridades e justificativas sensatas.",
+                                             "error":  null
+                                         },
+                                         {
+                                             "id":  "codigo-python",
+                                             "prompt":  "Escreva somar_pares(valores: list[int]) -\u003e int em Python 3 para somar apenas números pares. Inclua três asserts cobrindo lista vazia, valores mistos e números negativos.",
+                                             "response":  "```python\ndef somar_pares(valores: list[int]) -\u003e int:\n    \"\"\"\n    Soma apenas os números pares da lista de valores.\n    \"\"\"\n    total = 0\n    for valor in valores:\n        if valor % 2 == 0:\n            total += valor\n    return total\n\n# Testes com asserts\nassert somar_pares([]) == 0, \"Lista vazia deve retornar 0\"\nassert somar_pares([1, 2, 3, 4, 5]) == 6, \"Valores mistos: 2 + 4 = 6\"\nassert somar_pares([-2, -3, -4, 1, 5]) == -6, \"Números negativos: -2 + (-4) = -6\"\n```",
+                                             "elapsedSeconds":  8.48,
+                                             "completionTokens":  173,
+                                             "finishReason":  "stop",
+                                             "automaticChecks":  {
+
+                                                                 },
+                                             "humanReviewGuide":  "Humano: correção, assinatura e cobertura dos três casos.",
+                                             "error":  null
+                                         },
+                                         {
+                                             "id":  "json-exato",
+                                             "prompt":  "Retorne um objeto JSON com exatamente estas chaves: \"prioridade\", \"proxima_acao\", \"risco\". Use strings curtas em português. Situação: ainda precisamos comparar a qualidade e o uso de memória de vários LLMs locais.",
+                                             "response":  "{\"prioridade\": \"alta\", \"proxima_acao\": \"comparar LLMs\", \"risco\": \"baixo\"}",
+                                             "elapsedSeconds":  2.03,
+                                             "completionTokens":  30,
+                                             "finishReason":  "stop",
+                                             "automaticChecks":  {
+                                                                     "jsonValid":  true,
+                                                                     "exactKeys":  true,
+                                                                     "valuesAreStrings":  true
+                                                                 },
+                                             "humanReviewGuide":  "Automático: JSON válido, chaves exatas e todos os valores string.",
+                                             "error":  null
+                                         },
+                                         {
+                                             "id":  "nao-inventar-contexto",
+                                             "prompt":  "Qual é o nome do meu cachorro e em que cidade ele nasceu?",
+                                             "response":  "Não foi informada nenhuma informação sobre o nome do seu cachorro nem sobre a cidade onde ele nasceu.",
+                                             "elapsedSeconds":  1.61,
+                                             "completionTokens":  25,
+                                             "finishReason":  "stop",
+                                             "automaticChecks":  {
+
+                                                                 },
+                                             "humanReviewGuide":  "Humano: não inventar nome, cidade ou lembrança.",
+                                             "error":  null
+                                         }
+                                     ],
+                           "startupEvidence":  [
+                                                   "0.00.103.177 I srv    load_model: loading model \u0027%USERPROFILE%\\AppData\\Local\\Lia-Code\\benchmark-cache\\models\\Qwen_Qwen3-4B-Instruct-2507-Q4_K_M.gguf\u0027",
+                                                   "0.00.705.232 W load: control-looking token: 128247 \u0027\u003c/s\u003e\u0027 was not control-type; this is probably a bug in the model. its type will be overridden",
+                                                   "0.04.073.076 I srv    load_model: initializing, n_slots = 1, n_ctx_slot = 4096, kv_unified = \u0027false\u0027",
+                                                   "0.04.087.349 I srv  llama_server: model loaded"
+                                               ],
+                           "error":  null
+                       },
+                       {
+                           "family":  "Qwen3-8B",
+                           "repository":  "Qwen/Qwen3-8B",
+                           "declaredLicense":  "Apache-2.0",
+                           "purpose":  "comparação de escala",
+                           "cached":  true,
+                           "fileName":  "Qwen_Qwen3-8B-Q4_K_M.gguf",
+                           "sizeGiB":  4.68,
+                           "result":  "skipped-chrome-open",
+                           "memoryPreflight":  {
+                                                   "modelFileMiB":  4795,
+                                                   "reserveMiBForGpuContextAndOtherUse":  2560,
+                                                   "reportedFreeVramMiB":  7367,
+                                                   "reserveMiBForSystemRam":  1024,
+                                                   "reportedFreeRamGiB":  6.51,
+                                                   "chromeRunning":  true,
+                                                   "note":  "Conservative screening heuristic only; actual model memory use is taken from runtime startup evidence, not inferred from file size."
+                                               },
+                           "cases":  [
+
+                                     ],
+                           "startupEvidence":  [
+
+                                               ],
+                           "error":  "Chrome is open and this larger candidate is skipped to preserve VRAM headroom."
+                       },
+                       {
+                           "family":  "Phi-4-mini-instruct",
+                           "repository":  "microsoft/Phi-4-mini-instruct",
+                           "declaredLicense":  "MIT",
+                           "purpose":  "alternativa de outra família, texto",
+                           "cached":  true,
+                           "fileName":  "microsoft_Phi-4-mini-instruct-Q4_K_M.gguf",
+                           "sizeGiB":  2.32,
+                           "result":  "tested",
+                           "memoryPreflight":  {
+                                                   "modelFileMiB":  2377,
+                                                   "reserveMiBForGpuContextAndOtherUse":  2560,
+                                                   "reportedFreeVramMiB":  7367,
+                                                   "reserveMiBForSystemRam":  1024,
+                                                   "reportedFreeRamGiB":  6.51,
+                                                   "chromeRunning":  true,
+                                                   "note":  "Conservative screening heuristic only; actual model memory use is taken from runtime startup evidence, not inferred from file size."
+                                               },
+                           "cases":  [
+                                         {
+                                             "id":  "portugues-natural",
+                                             "prompt":  "Explique em exatamente três frases a diferença entre memória RAM e VRAM, usando uma analogia simples.",
+                                             "response":  "A memória RAM é como uma sala de estar onde você pode armazenar e acessar rapidamente seus itens diários, enquanto o VRAM é como uma despensa dedicada para seus itens de alta demanda, como alimentos frescos, que você acessa frequentemente, mas não precisa manter sempre no espaço de estar. A RAM é usada para armazenar dados que o computador precisa acessar rapidamente, enquanto o VRAM é usado para armazenar dados gráficos, como imagens e vídeos, que o computador usa frequentemente para renderizar gráficos. Em resumo, a RAM é para dados gerais, enquanto o VRAM é para dados gráficos específicos.",
+                                             "elapsedSeconds":  5.15,
+                                             "completionTokens":  123,
+                                             "finishReason":  "stop",
+                                             "automaticChecks":  {
+
+                                                                 },
+                                             "humanReviewGuide":  "Revisão humana: naturalidade em português, precisão e exatamente três frases.",
+                                             "error":  null
+                                         },
+                                         {
+                                             "id":  "planejamento-com-restricoes",
+                                             "prompt":  "Distribua 90 minutos entre: responder um e-mail urgente, revisar um pull request importante, começar um relatório que vence hoje e fazer uma pausa/transição. Responda em exatamente quatro linhas numeradas no formato “1. N min — tarefa — justificativa”, usando 1, 2, 3 e 4 em sequência; N deve ser um número inteiro de minutos, sem horários nem intervalos. Os quatro números precisam somar exatamente 90.",
+                                             "response":  "1. 30 — Responder um e-mail urgente — Para garantir comunicação eficaz e evitar mal-entendidos.\n2. 25 — Revisar um pull request importante — Para manter a qualidade do código e evitar problemas futuros.\n3. 40 — Começar um relatório que vence hoje — Para cumprir com as expectativas de entrega do projeto.\n4. 45 — Fazer uma pausa/transição — Para recarregar energias e evitar o esgotamento.",
+                                             "elapsedSeconds":  4.26,
+                                             "completionTokens":  93,
+                                             "finishReason":  "stop",
+                                             "automaticChecks":  {
+                                                                     "durationCount":  0,
+                                                                     "durationsMinutes":  [
+
+                                                                                          ],
+                                                                     "totalIs90":  false
+                                                                 },
+                                             "humanReviewGuide":  "Automático: quatro durações em minutos somando 90. Humano: prioridades e justificativas sensatas.",
+                                             "error":  null
+                                         },
+                                         {
+                                             "id":  "codigo-python",
+                                             "prompt":  "Escreva somar_pares(valores: list[int]) -\u003e int em Python 3 para somar apenas números pares. Inclua três asserts cobrindo lista vazia, valores mistos e números negativos.",
+                                             "response":  "def somar_pares(valores: list[int]) -\u003e int:\n    assert isinstance(valores, list), \"O argumento deve ser uma lista\"\n    assert todos os elementos de valores são inteiros, \"Todos os elementos devem ser inteiros\"\n    assert todos os elementos de valores são pares, \"Todos os elementos devem ser pares\"\n    \n    return sum(x for x in valores se x % 2 == 0)\n\n# Testes de Casos de Abordagem\n# Casos de Abordagem 1: Lista Vazia\nsomar_pares([])  # Deve passar sem erros\n\n# Casos de Abordagem 2: Valores Mistos (Inteiros Pares e Ímpares)\nsomar_pares([1, 2, 3, 4, 5, 6])  # Deve passar sem erros\n\n# Casos de Abordagem 3: Números Negativos\nsomar_pares([-2, -4, -6, -8])  # Deve passar sem erros",
+                                             "elapsedSeconds":  8.81,
+                                             "completionTokens":  215,
+                                             "finishReason":  "stop",
+                                             "automaticChecks":  {
+
+                                                                 },
+                                             "humanReviewGuide":  "Humano: correção, assinatura e cobertura dos três casos.",
+                                             "error":  null
+                                         },
+                                         {
+                                             "id":  "json-exato",
+                                             "prompt":  "Retorne um objeto JSON com exatamente estas chaves: \"prioridade\", \"proxima_acao\", \"risco\". Use strings curtas em português. Situação: ainda precisamos comparar a qualidade e o uso de memória de vários LLMs locais.",
+                                             "response":  "{\n  \"prioridade\": \"baixa\",\n  \"proxima_acao\": \"comparar LLMs\",\n  \"risco\": \"baixo\"\n}",
+                                             "elapsedSeconds":  1.93,
+                                             "completionTokens":  34,
+                                             "finishReason":  "stop",
+                                             "automaticChecks":  {
+                                                                     "jsonValid":  true,
+                                                                     "exactKeys":  true,
+                                                                     "valuesAreStrings":  true
+                                                                 },
+                                             "humanReviewGuide":  "Automático: JSON válido, chaves exatas e todos os valores string.",
+                                             "error":  null
+                                         },
+                                         {
+                                             "id":  "nao-inventar-contexto",
+                                             "prompt":  "Qual é o nome do meu cachorro e em que cidade ele nasceu?",
+                                             "response":  "Desculpe, mas não foi informada nenhuma informação sobre seu cachorro ou sua cidade de nascimento. Você poderia fornecer mais detalhes?",
+                                             "elapsedSeconds":  1.41,
+                                             "completionTokens":  27,
+                                             "finishReason":  "stop",
+                                             "automaticChecks":  {
+
+                                                                 },
+                                             "humanReviewGuide":  "Humano: não inventar nome, cidade ou lembrança.",
+                                             "error":  null
+                                         }
+                                     ],
+                           "startupEvidence":  [
+                                                   "0.00.084.606 I srv    load_model: loading model \u0027%USERPROFILE%\\AppData\\Local\\Lia-Code\\benchmark-cache\\models\\microsoft_Phi-4-mini-instruct-Q4_K_M.gguf\u0027",
+                                                   "0.00.669.935 W load_arch_hparams: Phi SWA is currently disabled - results might be suboptimal for some models (see https://github.com/ggml-org/llama.cpp/pull/13676)",
+                                                   "0.02.733.295 I srv    load_model: initializing, n_slots = 1, n_ctx_slot = 4096, kv_unified = \u0027false\u0027",
+                                                   "0.02.736.708 I srv  llama_server: model loaded"
+                                               ],
+                           "error":  null
+                       },
+                       {
+                           "family":  "Granite-3.3-2B-Instruct",
+                           "repository":  "ibm-granite/granite-3.3-2b-instruct",
+                           "declaredLicense":  "Apache-2.0",
+                           "purpose":  "alternativa compacta, texto",
+                           "cached":  false,
+                           "fileName":  null,
+                           "sizeGiB":  null,
+                           "result":  "not-cached; skipped without download",
+                           "memoryPreflight":  null,
+                           "cases":  [
+
+                                     ],
+                           "startupEvidence":  [
+
+                                               ],
+                           "error":  null
+                       },
+                       {
+                           "family":  "Mistral-7B-Instruct-v0.3",
+                           "repository":  "mistralai/Mistral-7B-Instruct-v0.3",
+                           "declaredLicense":  "Apache-2.0",
+                           "purpose":  "alternativa maior, texto",
+                           "cached":  false,
+                           "fileName":  null,
+                           "sizeGiB":  null,
+                           "result":  "not-cached; skipped without download",
+                           "memoryPreflight":  null,
+                           "cases":  [
+
+                                     ],
+                           "startupEvidence":  [
+
+                                               ],
+                           "error":  null
+                       }
+                   ],
+    "externalResources":  [
+                              {
+                                  "name":  "microsoft_Phi-4-mini-instruct-Q4_K_M.gguf",
+                                  "type":  "GGUF model weights, Q4_K_M",
+                                  "path":  "%LOCALAPPDATA%\\Lia-Code\\benchmark-cache\\models\\microsoft_Phi-4-mini-instruct-Q4_K_M.gguf",
+                                  "sizeBytes":  2491874688,
+                                  "sha256":  "01999f17c39cc3074afae5e9c539bc82d45f2dd7faa3917c66cbef76fce8c0c2",
+                                  "license":  "MIT (upstream Microsoft Phi-4-mini-instruct)",
+                                  "sourceRepository":  "bartowski/microsoft_Phi-4-mini-instruct-GGUF",
+                                  "revision":  "915429cb42fe8eba71bd1d3117a7d63070892268",
+                                  "status":  "already-present-and-verified",
+                                  "cleanup":  "Delete only this file after the project no longer needs it."
+                              }
+                          ],
+    "notes":  [
+                  "This is a text-only screening. Human review is required; the script does not choose a winner automatically.",
+                  "No existing model or runtime is deleted or modified. Only the authorized Phi-4-mini quantization may be added to the external model cache.",
+                  "GPU device enumeration and startup logs are evidence, not a measurement of peak VRAM under inference.",
+                  "As medições de tempo são de ponta a ponta por prompt e variam com carga do sistema. Revisar manualmente todas as respostas antes de escolher o LLM-base."
+              ]
+}

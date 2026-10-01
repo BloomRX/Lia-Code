@@ -1,0 +1,45 @@
+﻿Lia-Code — comparação local de LLMs em cache; sem downloads/instalações.
+Sistema: Microsoft Windows 11 Home | CPU: AMD Ryzen 5 5500 | RAM livre inicial: 4.36 GiB
+Runtime: version: 0.5.0-dev (build 11249, commit 6d78fb072) | built with Clang 20.1.8 for Windows x86_64
+Available devices:
+  Vulkan0: AMD Radeon RX 580 2048SP (8192 MiB, 7367 MiB free)
+
+===== Qwen3-4B | Qwen_Qwen3-4B-Instruct-2507-Q4_K_M.gguf | 2.33 GiB =====
+portugues-natural: 5.99s; tokens=123; finish=stop
+A memória RAM é como o espaço de trabalho de um escritório: você pode armazenar muitas coisas, mas só pode trabalhar com algumas de vez, e tudo precisa ser carregado para o local de trabalho.  
+A VRAM é como o espaço de trabalho de uma câmara de fotos: ela só armazena as imagens que estão sendo usadas no momento, e é especial para processar gráficos e imagens.  
+RAM serve para todo o sistema, enquanto VRAM é só para o processamento de imagens e jogos gráficos.
+planejamento-com-restricoes: 9.63s; tokens=197; finish=stop
+1. **00:00–00:30** – Responda o e-mail urgente com foco em ações claras e prontas, priorizando mensagens que exigem resposta imediata.  
+2. **00:30–01:30** – Revisar o pull request importante, validando código, testes e alinhamento com a documentação.  
+3. **01:30–06:30** – Começar o relatório que vence hoje, estruturando os dados principais e definindo os pontos-chave a serem destacados.  
+4. **06:30–07:00** – Faça uma pausa curta para respirar, se mover e reorganizar o foco mental antes de encerrar o dia com clareza.  
+
+*Total: 90 minutos.*
+Checagens: {"durationCount":0,"durationsMinutes":[],"totalIs90":false}
+codigo-python: 8.47s; tokens=173; finish=stop
+```python
+def somar_pares(valores: list[int]) -> int:
+    """
+    Soma apenas os números pares da lista de valores.
+    """
+    total = 0
+    for valor in valores:
+        if valor % 2 == 0:
+            total += valor
+    return total
+
+# Testes com asserts
+assert somar_pares([]) == 0, "Lista vazia deve retornar 0"
+assert somar_pares([1, 2, 3, 4, 5]) == 6, "Valores mistos: 2 + 4 = 6"
+assert somar_pares([-2, -3, -4, 1, 5]) == -6, "Números negativos: -2 + (-4) = -6"
+```
+json-exato: 2.03s; tokens=30; finish=stop
+{"prioridade": "alta", "proxima_acao": "comparar LLMs", "risco": "baixo"}
+Checagens: {"jsonValid":true,"exactKeys":true,"valuesAreStrings":true}
+nao-inventar-contexto: 1.61s; tokens=25; finish=stop
+Não foi informada nenhuma informação sobre o nome do seu cachorro nem sobre a cidade onde ele nasceu.
+SKIP Qwen3-8B: arquivo + reserva conservadora excede RAM livre.
+SKIP Phi-4-mini-instruct: nenhum GGUF correspondente no cache; nada será baixado.
+SKIP Granite-3.3-2B-Instruct: nenhum GGUF correspondente no cache; nada será baixado.
+SKIP Mistral-7B-Instruct-v0.3: nenhum GGUF correspondente no cache; nada será baixado.

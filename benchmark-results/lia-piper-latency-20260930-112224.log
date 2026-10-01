@@ -1,0 +1,52 @@
+﻿Lia-Code â€” teste Piper Faber: CPU existente versus ambiente DirectML isolado.
+Nenhum pacote serÃ¡ instalado no Python global; tudo baixado/instalado fica sob o diretÃ³rio TTS externo e removÃ­vel.
+Baixando: https://huggingface.co/rhasspy/piper-voices/resolve/2f8dbe0bb0dde986411632bf014a13cdbe6596e7/pt/pt_BR/faber/medium/pt_BR-faber-medium.onnx?download=true
+Baixando: https://huggingface.co/rhasspy/piper-voices/resolve/2f8dbe0bb0dde986411632bf014a13cdbe6596e7/pt/pt_BR/faber/medium/pt_BR-faber-medium.onnx.json?download=true
+Baixando: https://files.pythonhosted.org/packages/12/9c/c736d1961cf9ce0655278731b9430df41892ca2ded7b09dabcb340612158/piper_tts-1.8.0-cp39-abi3-win_amd64.whl
+Baixando: https://files.pythonhosted.org/packages/b7/04/816932a3ade867a687e406716ca76e0774c6b921545b45818e3ebfcc54ce/onnxruntime_directml-1.24.4-cp314-cp314-win_amd64.whl
+Processing %USERPROFILE%\appdata\local\lia-code\tts\piper-directml-eval\piper_tts-1.8.0-cp39-abi3-win_amd64.whl
+Installing collected packages: piper-tts
+Successfully installed piper-tts-1.8.0
+System.Management.Automation.RemoteException
+[notice] A new release of pip is available: 25.3 -> 26.2.1
+[notice] To update, run: %USERPROFILE%\AppData\Local\Lia-Code\tts\piper-directml-eval\env-cpu\Scripts\python.exe -m pip install --upgrade pip
+Processing %USERPROFILE%\appdata\local\lia-code\tts\piper-directml-eval\onnxruntime_directml-1.24.4-cp314-cp314-win_amd64.whl
+Collecting flatbuffers (from onnxruntime-directml==1.24.4)
+  Downloading flatbuffers-25.12.19-py2.py3-none-any.whl.metadata (1.0 kB)
+Collecting numpy>=1.21.6 (from onnxruntime-directml==1.24.4)
+  Downloading numpy-2.5.3-cp314-cp314-win_amd64.whl.metadata (6.6 kB)
+Collecting packaging (from onnxruntime-directml==1.24.4)
+  Downloading packaging-26.3-py3-none-any.whl.metadata (3.5 kB)
+Collecting protobuf (from onnxruntime-directml==1.24.4)
+  Downloading protobuf-7.36.2-cp310-abi3-win_amd64.whl.metadata (595 bytes)
+Collecting sympy (from onnxruntime-directml==1.24.4)
+  Downloading sympy-1.14.0-py3-none-any.whl.metadata (12 kB)
+Collecting mpmath<1.4,>=1.1.0 (from sympy->onnxruntime-directml==1.24.4)
+  Downloading mpmath-1.3.0-py3-none-any.whl.metadata (8.6 kB)
+Downloading numpy-2.5.3-cp314-cp314-win_amd64.whl (12.7 MB)
+   ---------------------------------------- 12.7/12.7 MB 50.8 MB/s  0:00:00
+Downloading flatbuffers-25.12.19-py2.py3-none-any.whl (26 kB)
+Downloading packaging-26.3-py3-none-any.whl (129 kB)
+Downloading protobuf-7.36.2-cp310-abi3-win_amd64.whl (456 kB)
+Downloading sympy-1.14.0-py3-none-any.whl (6.3 MB)
+   ---------------------------------------- 6.3/6.3 MB 77.9 MB/s  0:00:00
+Downloading mpmath-1.3.0-py3-none-any.whl (536 kB)
+   ---------------------------------------- 536.2/536.2 kB 26.7 MB/s  0:00:00
+Installing collected packages: mpmath, flatbuffers, sympy, protobuf, packaging, numpy, onnxruntime-directml
+
+Successfully installed flatbuffers-25.12.19 mpmath-1.3.0 numpy-2.5.3 onnxruntime-directml-1.24.4 packaging-26.3 protobuf-7.36.2 sympy-1.14.0
+System.Management.Automation.RemoteException
+[notice] A new release of pip is available: 25.3 -> 26.2.1
+[notice] To update, run: %USERPROFILE%\AppData\Local\Lia-Code\tts\piper-directml-eval\env-directml\Scripts\python.exe -m pip install --upgrade pip
+Processing %USERPROFILE%\appdata\local\lia-code\tts\piper-directml-eval\piper_tts-1.8.0-cp39-abi3-win_amd64.whl
+Installing collected packages: piper-tts
+Successfully installed piper-tts-1.8.0
+System.Management.Automation.RemoteException
+[notice] A new release of pip is available: 25.3 -> 26.2.1
+[notice] To update, run: %USERPROFILE%\AppData\Local\Lia-Code\tts\piper-directml-eval\env-directml\Scripts\python.exe -m pip install --upgrade pip
+{"packageCount": 77, "output": "cpu-package-inventory.json"}
+{"packageCount": 9, "output": "directml-package-inventory.json"}
+Executando benchmark CPU com ONNX Runtime preexistente...
+{"providerRequested": ["CPUExecutionProvider"], "providersActive": ["CPUExecutionProvider"], "pythonOnnxRuntimeVersion": "1.24.4", "modelLoadSeconds": 1.980146000001696, "sampleRate": 22050, "runsPerText": 4, "texts": {"short": {"firstAudioMedianSeconds": 0.08050534999983938, "totalMedianSeconds": 0.2969475499994587, "audioDurationSeconds": 2.7341496598639456, "realTimeFactorMedian": 0.10860691144984183, "wav": "faber-cpu-short.wav"}, "paragraph": {"firstAudioMedianSeconds": 0.0887341000006927, "totalMedianSeconds": 1.4944233500000337, "audioDurationSeconds": 20.67156462585034, "realTimeFactorMedian": 0.07229367380015432, "wav": "faber-cpu-paragraph.wav"}}, "sessionProfile": "ort-cpu_2026-09-30_11-23-37.json", "nodeProvidersObserved": ["CPUExecutionProvider"], "gpuExecutionConfirmed": false}
+Executando benchmark DirectML; exige confirmaÃ§Ã£o de nÃ³s executados no provider DML...
+{"providerRequested": ["DmlExecutionProvider", "CPUExecutionProvider"], "providersActive": ["DmlExecutionProvider", "CPUExecutionProvider"], "pythonOnnxRuntimeVersion": "1.24.4", "modelLoadSeconds": 2.3890540000011242, "sampleRate": 22050, "runsPerText": 4, "texts": {"short": {"firstAudioMedianSeconds": 0.1376604999995834, "totalMedianSeconds": 0.6521732499995778, "audioDurationSeconds": 2.6877097505668934, "realTimeFactorMedian": 0.24265017822777218, "wav": "faber-directml-short.wav"}, "paragraph": {"firstAudioMedianSeconds": 0.21954174999973475, "totalMedianSeconds": 1.1552364499993928, "audioDurationSeconds": 20.67156462585034, "realTimeFactorMedian": 0.055885293199080775, "wav": "faber-directml-paragraph.wav"}}, "sessionProfile": "ort-directml_2026-09-30_11-23-53.json", "nodeProvidersObserved": ["CPUExecutionProvider", "DmlExecutionProvider"], "gpuExecutionConfirmed": true}

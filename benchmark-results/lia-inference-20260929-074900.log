@@ -1,0 +1,10 @@
+Lia-Code inference benchmark | 20260929-074900
+Lia-Code - benchmark local de inferência
+Vai baixar um runtime Vulkan e um modelo GGUF (~2,5 GB para o modelo).
+Cache: %USERPROFILE%\AppData\Local\Lia-Code\benchmark-cache
+Espaço livre no drive do cache: 213,9 GB
+Runtime em cache reutilizado.
+Baixando modelo Qwen3-4B-Instruct-2507 Q4_K_M (~2,5 GB)...
+
+Dispositivos reportados pelo llama.cpp:
+ERRO durante download model from Hugging Face: A expressão depois de '&' em um elemento do pipeline produziu um objeto inválido. Ela deve resultar em um nome de comando, bloco de script ou objeto CommandInfo.

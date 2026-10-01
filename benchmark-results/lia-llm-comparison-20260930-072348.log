@@ -1,0 +1,108 @@
+﻿Lia-Code — comparação LLM local; usa cache e baixa apenas o Phi-4-mini autorizado se estiver ausente. Não instala ou atualiza software.
+Sistema: Microsoft Windows 11 Home | CPU: AMD Ryzen 5 5500 | RAM livre inicial: 11.14 GiB
+Runtime: version: 0.5.0-dev (build 11249, commit 6d78fb072) | built with Clang 20.1.8 for Windows x86_64
+Available devices:
+  Vulkan0: AMD Radeon RX 580 2048SP (8192 MiB, 7367 MiB free)
+Baixando somente Phi-4-mini-instruct Q4_K_M, autorizado pelo usuário (aprox. 2,49 GB), para o cache externo...
+Phi-4-mini baixado e SHA256 validado; caminho: %LOCALAPPDATA%\Lia-Code\benchmark-cache\models\microsoft_Phi-4-mini-instruct-Q4_K_M.gguf
+
+===== Qwen3-4B | Qwen_Qwen3-4B-Instruct-2507-Q4_K_M.gguf | 2.33 GiB =====
+portugues-natural: 6.35s; tokens=123; finish=stop
+A memória RAM é como o espaço de trabalho de um escritório: você pode armazenar muitas coisas, mas só pode trabalhar com algumas de vez, e tudo precisa ser carregado para o local de trabalho.  
+A VRAM é como o espaço de trabalho de uma câmara de fotos: ela só armazena as imagens que estão sendo usadas no momento, e é especial para processar gráficos e imagens.  
+RAM serve para todo o sistema, enquanto VRAM é só para o processamento de imagens e jogos gráficos.
+planejamento-com-restricoes: 6.63s; tokens=115; finish=stop
+1. 15 min — responder um e-mail urgente — prioridade imediata para evitar atrasos operacionais.  
+2. 20 min — revisar um pull request importante — garantir integridade do código antes da merge.  
+3. 30 min — começar um relatório que vence hoje — tempo necessário para coletar dados e estruturar o conteúdo.  
+4. 25 min — pausa/transição — recarregar energia e organizar pensamentos para tarefas futuras.
+Checagens: {"durationCount":4,"durationsMinutes":[15,20,30,25],"totalIs90":true}
+codigo-python: 9s; tokens=173; finish=stop
+```python
+def somar_pares(valores: list[int]) -> int:
+    """
+    Soma apenas os números pares da lista de valores.
+    """
+    total = 0
+    for valor in valores:
+        if valor % 2 == 0:
+            total += valor
+    return total
+
+# Testes com asserts
+assert somar_pares([]) == 0, "Lista vazia deve retornar 0"
+assert somar_pares([1, 2, 3, 4, 5]) == 6, "Valores mistos: 2 + 4 = 6"
+assert somar_pares([-2, -3, -4, 1, 5]) == -6, "Números negativos: -2 + (-4) = -6"
+```
+json-exato: 2.18s; tokens=30; finish=stop
+{"prioridade": "alta", "proxima_acao": "comparar LLMs", "risco": "baixo"}
+Checagens: {"jsonValid":true,"exactKeys":true,"valuesAreStrings":true}
+nao-inventar-contexto: 1.7s; tokens=25; finish=stop
+Não foi informada nenhuma informação sobre o nome do seu cachorro nem sobre a cidade onde ele nasceu.
+
+===== Qwen3-8B | Qwen_Qwen3-8B-Q4_K_M.gguf | 4.68 GiB =====
+portugues-natural: 7.23s; tokens=99; finish=stop
+A memória RAM é como a memória temporária do seu computador, usada para executar programas e processar dados enquanto você trabalha. A VRAM, por sua vez, é a memória dedicada à placa de vídeo, usada para armazenar e processar imagens e gráficos. É como se a RAM fosse a memória do seu quarto e a VRAM fosse a memória do seu computador de jogos.
+planejamento-com-restricoes: 8.18s; tokens=103; finish=stop
+1. 20 min — responder e-mail urgente — prioridade imediata e impacto direto na operação  
+2. 30 min — revisar pull request importante — garantir qualidade e alinhar com a equipe  
+3. 30 min — começar relatório que vence hoje — evitar atrasos e manter produtividade  
+4. 10 min — pausa/transição — recarregar energia e manter foco durante o dia
+Checagens: {"durationCount":4,"durationsMinutes":[20,30,30,10],"totalIs90":true}
+codigo-python: 9.85s; tokens=140; finish=stop
+```python
+def somar_pares(valores: list[int]) -> int:
+    return sum(num for num in valores if num % 2 == 0)
+
+# Asserts de teste
+assert somar_pares([]) == 0, "A lista vazia deve retornar 0"
+assert somar_pares([1, 2, 3, 4, 5]) == 6, "Valores mistos: apenas 2 e 4 são pares"
+assert somar_pares([-2, -3, -4, -5]) == -6, "Números negativos: -2 e -4 são pares"
+```
+json-exato: 3.69s; tokens=38; finish=stop
+{
+  "prioridade": "alta",
+  "proxima_acao": "realizar testes",
+  "risco": "desempenho inadequado"
+}
+Checagens: {"jsonValid":true,"exactKeys":true,"valuesAreStrings":true}
+nao-inventar-contexto: 1.31s; tokens=9; finish=stop
+Essa informação não foi informada.
+
+===== Phi-4-mini-instruct | microsoft_Phi-4-mini-instruct-Q4_K_M.gguf | 2.32 GiB =====
+portugues-natural: 5.56s; tokens=123; finish=stop
+A memória RAM é como uma sala de estar onde você pode armazenar e acessar rapidamente seus itens diários, enquanto o VRAM é como uma despensa dedicada para seus itens de alta demanda, como alimentos frescos, que você acessa frequentemente, mas não precisa manter sempre no espaço de estar. A RAM é usada para armazenar dados que o computador precisa acessar rapidamente, enquanto o VRAM é usado para armazenar dados gráficos, como imagens e vídeos, que o computador usa frequentemente para renderizar gráficos. Em resumo, a RAM é para dados gerais, enquanto o VRAM é para dados gráficos específicos.
+planejamento-com-restricoes: 4.52s; tokens=93; finish=stop
+1. 30 — Responder um e-mail urgente — Para garantir comunicação eficaz e evitar mal-entendidos.
+2. 25 — Revisar um pull request importante — Para manter a qualidade do código e evitar problemas futuros.
+3. 40 — Começar um relatório que vence hoje — Para cumprir com as expectativas de entrega do projeto.
+4. 45 — Fazer uma pausa/transição — Para recarregar energias e evitar o esgotamento.
+Checagens: {"durationCount":0,"durationsMinutes":[],"totalIs90":false}
+codigo-python: 9.32s; tokens=215; finish=stop
+def somar_pares(valores: list[int]) -> int:
+    assert isinstance(valores, list), "O argumento deve ser uma lista"
+    assert todos os elementos de valores são inteiros, "Todos os elementos devem ser inteiros"
+    assert todos os elementos de valores são pares, "Todos os elementos devem ser pares"
+    
+    return sum(x for x in valores se x % 2 == 0)
+
+# Testes de Casos de Abordagem
+# Casos de Abordagem 1: Lista Vazia
+somar_pares([])  # Deve passar sem erros
+
+# Casos de Abordagem 2: Valores Mistos (Inteiros Pares e Ímpares)
+somar_pares([1, 2, 3, 4, 5, 6])  # Deve passar sem erros
+
+# Casos de Abordagem 3: Números Negativos
+somar_pares([-2, -4, -6, -8])  # Deve passar sem erros
+json-exato: 2.05s; tokens=34; finish=stop
+{
+  "prioridade": "baixa",
+  "proxima_acao": "comparar LLMs",
+  "risco": "baixo"
+}
+Checagens: {"jsonValid":true,"exactKeys":true,"valuesAreStrings":true}
+nao-inventar-contexto: 1.49s; tokens=27; finish=stop
+Desculpe, mas não foi informada nenhuma informação sobre seu cachorro ou sua cidade de nascimento. Você poderia fornecer mais detalhes?
+SKIP Granite-3.3-2B-Instruct: nenhum GGUF correspondente no cache; sem download autorizado para essa família.
+SKIP Mistral-7B-Instruct-v0.3: nenhum GGUF correspondente no cache; sem download autorizado para essa família.

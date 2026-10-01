@@ -1,0 +1,99 @@
+﻿{
+    "schemaVersion":  1,
+    "evaluation":  "omni-runtime-preflight",
+    "createdAt":  "2026-09-29T22:16:30.7184949-03:00",
+    "machine":  {
+                    "os":  "Microsoft Windows 11 Home",
+                    "osVersion":  "10.0.26200",
+                    "osBuild":  "26200",
+                    "architecture":  "AMD64",
+                    "cpu":  "AMD Ryzen 5 5500",
+                    "cpuCores":  6,
+                    "cpuLogicalProcessors":  12,
+                    "installedRamGiB":  15.89,
+                    "freeRamGiBAtStart":  5.09
+                },
+    "software":  {
+                     "powershell":  "5.1.26100.9444",
+                     "pythonDetected":  true,
+                     "gitDetected":  true,
+                     "ollamaDetected":  false,
+                     "dxdiag":  true
+                 },
+    "accelerators":  [
+                         {
+                             "name":  "Parsec Virtual Display Adapter",
+                             "driverVersion":  "0.45.0.0",
+                             "driverDate":  "\/Date(1706140800000)\/",
+                             "reportedVramGiB":  null,
+                             "videoProcessor":  null
+                         },
+                         {
+                             "name":  "AMD Radeon RX 580 2048SP",
+                             "driverVersion":  "31.0.21925.1001",
+                             "driverDate":  "\/Date(1779235200000)\/",
+                             "reportedVramGiB":  4,
+                             "videoProcessor":  "AMD Radeon Graphics Processor (0x6FDF)"
+                         }
+                     ],
+    "runtimes":  {
+                     "ollama":  {
+                                    "detected":  false,
+                                    "localModels":  null
+                                },
+                     "llamaCpp":  {
+                                      "commandsOnPath":  {
+                                                             "llama-bench":  false,
+                                                             "llama-server":  false,
+                                                             "llama-cli":  false
+                                                         },
+                                      "cachedVulkanRuntimeFound":  true,
+                                      "cliExecutableFound":  true,
+                                      "versionExitCode":  0,
+                                      "versionOutput":  [
+                                                            "version: 0.5.0-dev (build 11249, commit 6d78fb072)",
+                                                            "built with Clang 20.1.8 for Windows x86_64"
+                                                        ],
+                                      "listDevicesExitCode":  0,
+                                      "listDevicesOutput":  [
+                                                                "Available devices:",
+                                                                "  Vulkan0: AMD Radeon RX 580 2048SP (8192 MiB, 7367 MiB free)"
+                                                            ],
+                                      "vulkanDeviceListed":  true
+                                  }
+                 },
+    "omniReadiness":  {
+                          "stage":  "preflight-only; no model downloaded or executed",
+                          "referenceCandidate":  "Qwen2.5-Omni-3B (not selected)",
+                          "declaredInputs":  [
+                                                 "text",
+                                                 "image",
+                                                 "audio",
+                                                 "video"
+                                             ],
+                          "declaredOutputs":  [
+                                                  "text",
+                                                  "speech"
+                                              ],
+                          "officialBf16MinimumVramGiBFor15SecondVideo":  18.38,
+                          "statedActualUsageMultiplierAtLeast":  1.2,
+                          "memoryReferenceSource":  "https://github.com/QwenLM/Qwen2.5-Omni#minimum-gpu-memory-requirements",
+                          "targetGpuVramGiB":  8,
+                          "quantizedRuntimeVerified":  false,
+                          "modelSpecificMultimodalSupportVerified":  false,
+                          "cachedOmniAssets":  [
+
+                                               ],
+                          "cacheFreeSpaceGiB":  202.11,
+                          "runtimeDeviceEnumeration":  [
+                                                           "Available devices:",
+                                                           "  Vulkan0: AMD Radeon RX 580 2048SP (8192 MiB, 7367 MiB free)"
+                                                       ],
+                          "vulkanDeviceListed":  true
+                      },
+    "notes":  [
+                  "A enumeração lista dispositivos disponíveis; não comprova que um modelo multimodal específico seja suportado ou caiba na VRAM.",
+                  "VRAM via WMI pode estar ausente ou incorreta; a enumeração Vulkan informa dispositivos, não memória livre nem offload real.",
+                  "Este preflight não baixa nem executa modelos e não verifica processamento de imagem, áudio, vídeo ou geração de voz."
+              ]
+}

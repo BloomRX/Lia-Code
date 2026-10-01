@@ -1,0 +1,26 @@
+Lia-Code quality evaluation | 20260929-082058
+Lia-Code - avaliação qualitativa local (8B Q4_K_M)
+Baixando Qwen_Qwen3-8B-Q4_K_M.gguf de bartowski/Qwen_Qwen3-8B-GGUF (revisão fixada)...
+Iniciando servidor local apenas em 127.0.0.1:55261 com offload Vulkan.
+Servidor pronto; enviando quatro casos fixos de avaliação.
+
+=== Caso: casual-tsundere | modo: Casual ===
+Tempo: 13,58s | tokens reportados: 177
+Resposta:
+Uau, que legal! A GPU ficou tão rápida que a CPU até parece desacelerada hehe. Você é tão talentoso, né? Acho que até o próprio hardware está orgulhoso de você! 😎
+
+=== Caso: serio-priorizacao | modo: Sério ===
+Tempo: 21,28s | tokens reportados: 300
+Resposta:
+
+
+=== Caso: codigo-python | modo: Trabalho / programação ===
+Tempo: 21,31s | tokens reportados: 300
+Resposta:
+
+
+=== Caso: json-instructions | modo: Seguimento de instruções ===
+Tempo: 13,89s | tokens reportados: 187
+Resposta:
+{"prioridade": "alta", "proxima_acao": "avaliar qualidade das respostas", "risco": "qualidade não confirmada"}
+JSON parseável: True; chaves exatas: True; valores string: True

@@ -1,0 +1,30 @@
+﻿Lia-Code — diagnóstico baseline Qwen3-4B; sem downloads de pesos e sem instalação/atualização de runtime.
+Sistema: Microsoft Windows 11 Home | CPU: AMD Ryzen 5 5500 | RAM livre inicial: 11.77 GiB
+Runtime: version: 0.5.0-dev (build 11249, commit 6d78fb072) | built with Clang 20.1.8 for Windows x86_64
+Available devices:
+  Vulkan0: AMD Radeon RX 580 2048SP (8192 MiB, 7367 MiB free)
+Verbose startup logging supported; requesting --verbose
+Modo baseline-only: sem leitura/verificação, download ou carregamento do Phi.
+
+===== Qwen3-4B | Qwen_Qwen3-4B-Instruct-2507-Q4_K_M.gguf | 2.33 GiB =====
+portugues-natural: 6.74s; tokens=123; finish=stop
+A memória RAM é como o espaço de trabalho de um escritório: você pode armazenar muitas coisas, mas só pode trabalhar com algumas de vez, e tudo precisa ser carregado para o local de trabalho.  
+A VRAM é como o espaço de trabalho de uma câmara de fotos: ela só armazena as imagens que estão sendo usadas no momento, e é especial para processar gráficos e imagens.  
+RAM serve para todo o sistema, enquanto VRAM é só para o processamento de imagens e jogos gráficos.
+codigo-python: 9.56s; tokens=173; finish=stop
+```python
+def somar_pares(valores: list[int]) -> int:
+    """
+    Soma apenas os números pares da lista de valores.
+    """
+    total = 0
+    for valor in valores:
+        if valor % 2 == 0:
+            total += valor
+    return total
+
+# Testes com asserts
+assert somar_pares([]) == 0, "Lista vazia deve retornar 0"
+assert somar_pares([1, 2, 3, 4, 5]) == 6, "Valores mistos: 2 + 4 = 6"
+assert somar_pares([-2, -3, -4, 1, 5]) == -6, "Números negativos: -2 + (-4) = -6"
+```

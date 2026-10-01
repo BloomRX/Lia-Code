@@ -1,0 +1,55 @@
+Lia-Code quality evaluation | 20260929-081128
+Lia-Code - avaliação qualitativa local
+Iniciando servidor local apenas em 127.0.0.1:64114 com offload Vulkan.
+Servidor pronto; enviando quatro casos fixos de avaliação.
+
+=== Caso: casual-tsundere | modo: Casual ===
+Tempo: 4,77s | tokens reportados: 76
+Resposta:
+Uau, isso é show de bola! A GPU realmente tá com o poder de um super-herói em ação, né? 😏 Mas não se esqueça, a CPU ainda tá lá, esperando o seu turno pra se mostrar... (mesmo que eu não diga isso pra você, é só um segredo de assistente de desktop!)
+
+=== Caso: serio-priorizacao | modo: Sério ===
+Tempo: 8,84s | tokens reportados: 180
+Resposta:
+Claro. Aqui está uma ordem de trabalho realista, com blocos de tempo claros e uma explicação de prioridade para cada tarefa, considerando que você tem 90 minutos:
+
+---
+
+**1. Responder e-mail urgente – 15 minutos**  
+*Prioridade: Alta*  
+O e-mail é urgente e pode impactar processos ativos ou decisões imediatas. Responder imediatamente evita atrasos operacionais e garante que a comunicação interna seja clara e eficiente.
+
+**2. Revisar pull request importante – 30 minutos**  
+*Prioridade: Alta*  
+O PR é crítico para a integração de código e pode afetar a estabilidade do sistema. Uma revisão cuidadosa garante qualidade, segurança e alinh
+
+=== Caso: codigo-python | modo: Trabalho / programação ===
+Tempo: 8,81s | tokens reportados: 180
+Resposta:
+```python
+def somar_pares(valores: list[int]) -> int:
+    """
+    Soma apenas os números pares da lista de valores.
+    
+    Args:
+        valores: Lista de inteiros
+        
+    Returns:
+        Soma dos números pares da lista
+    """
+    total = 0
+    for valor in valores:
+        if valor % 2 == 0:
+            total += valor
+    return total
+
+# Testes com asserts
+assert somar_pares([]) == 0, "Lista vazia deve retornar 0"
+assert somar_pares([1, 2, 3, 4, 5]) == 6, "Valores mistos: 2 + 4 = 6"
+assert somar_pares([-2, -3, -4, 1, 5]) == -6
+
+=== Caso: json-instructions | modo: Seguimento de instruções ===
+Tempo: 2,13s | tokens reportados: 32
+Resposta:
+{"prioridade": "média", "proxima_acao": "avaliar qualidade das respostas", "risco": "baixo"}
+JSON parseável: True; chaves exatas: True; valores string: True

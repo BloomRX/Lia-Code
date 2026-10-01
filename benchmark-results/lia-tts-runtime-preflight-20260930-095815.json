@@ -1,0 +1,79 @@
+﻿{
+    "schemaVersion":  1,
+    "evaluation":  "neural-tts-runtime-availability-preflight",
+    "createdAt":  "2026-09-30T09:58:15.3663385-03:00",
+    "policy":  "Inventory already-present Python/ONNX/PyTorch/eSpeak components and matching local model files only. No network access, weight download, package installation, runtime update, or synthesis.",
+    "machine":  {
+                    "os":  "Microsoft Windows 11 Home",
+                    "osBuild":  "26200",
+                    "powershellVersion":  "5.1.26100.9444",
+                    "systemCulture":  "pt-BR"
+                },
+    "commands":  {
+                     "python.exe":  {
+                                        "available":  true,
+                                        "commandType":  "Application"
+                                    },
+                     "py.exe":  {
+                                    "available":  true,
+                                    "commandType":  "Application"
+                                },
+                     "espeak-ng.exe":  {
+                                           "available":  false,
+                                           "commandType":  null
+                                       },
+                     "espeak.exe":  {
+                                        "available":  false,
+                                        "commandType":  null
+                                    }
+                 },
+    "python":  {
+                   "executableAvailable":  true,
+                   "version":  null,
+                   "probeExitCode":  1,
+                   "modules":  {
+
+                               },
+                   "onnxRuntimeVersion":  null,
+                   "onnxExecutionProviders":  [
+
+                                              ],
+                   "probeError":  "Traceback (most recent call last): File \"\u003cstring\u003e\", line 2, in \u003cmodule\u003e names = [onnxruntime, kokoro, torch, transformers, piper, numpy, soundfile, huggingface_hub] ^^^^^^^^^^^ NameError: name \u0027onnxruntime\u0027 is not defined"
+               },
+    "modelCache":  {
+                       "piperFaberOnnxFiles":  [
+
+                                               ],
+                       "kokoroLikelyFiles":  [
+
+                                             ],
+                       "scannedOutsideRepository":  true
+                   },
+    "routeAssessment":  {
+                            "piperDirectOnnx":  {
+                                                    "python":  true,
+                                                    "onnxRuntime":  false,
+                                                    "cpuProvider":  false,
+                                                    "directMlProvider":  false,
+                                                    "espeakCommand":  false,
+                                                    "matchingFaberModelCached":  false,
+                                                    "readyToAttemptInference":  false,
+                                                    "note":  "Readiness is a prerequisite heuristic only; no model was loaded and license/provenance still require review."
+                                                },
+                            "kokoroPython":  {
+                                                 "python":  true,
+                                                 "kokoro":  false,
+                                                 "torch":  false,
+                                                 "transformers":  false,
+                                                 "espeakCommand":  false,
+                                                 "likelyModelOrVoiceFileCached":  false,
+                                                 "readyToAttemptInference":  false,
+                                                 "note":  "Readiness is a prerequisite heuristic only; no model was loaded and license/provenance still require review."
+                                             }
+                        },
+    "notes":  [
+                  "The rejected Microsoft Maria SAPI sample is not treated as the neural TTS candidate.",
+                  "Availability is detected without importing PyTorch, downloading models, contacting package indexes, or installing/updating software.",
+                  "A detected runtime or file is not proof of successful inference, quality, or a valid license; a later explicit test is still required."
+              ]
+}

@@ -1,0 +1,17 @@
+﻿Lia-Code â€” diagnÃ³stico de runtimes TTS neurais jÃ¡ presentes; sem downloads nem instalaÃ§Ãµes.
+Comando python.exe: True
+Comando py.exe: True
+Comando espeak-ng.exe: False
+Comando espeak.exe: False
+Python: 3.14.3
+Python module onnxruntime: True
+Python module kokoro: False
+Python module torch: False
+Python module transformers: False
+Python module piper: False
+Python module numpy: True
+Python module soundfile: True
+Python module huggingface_hub: False
+ONNX Runtime: 1.24.4 | providers: AzureExecutionProvider, CPUExecutionProvider
+Cache model Faber encontrado: False
+Cache provÃ¡vel Kokoro encontrado: False

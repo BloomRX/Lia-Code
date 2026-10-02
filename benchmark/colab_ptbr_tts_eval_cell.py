@@ -10,14 +10,16 @@ import shutil
 import subprocess
 import sys
 import textwrap
+import threading
 import time
 import venv
 
 # ---------- Configuração que pode ser alterada sem editar o restante ----------
 ROOT = Path('/content/lia_tts_candidate_eval')
 REF_WAV = ROOT / 'lia_original.wav'
-# Corrija para a transcrição literal da gravação escolhida, se necessário.
-REF_TEXT = 'Não é por vocês serem velhos e acabados.'
+# Será solicitado no notebook: transcreva literalmente TODO o áudio de referência.
+# O texto precisa corresponder à gravação carregada, não ao texto que será sintetizado.
+REF_TEXT = ''
 TEXTS = [
     'Não é por vocês serem velhos e acabados.',
     'O ônibus chegou às seis; vou passar no mercado e comprar pão de queijo.',
@@ -33,6 +35,10 @@ CHATTERBOX_BASE_ID = 'ResembleAI/chatterbox'
 CHATTERBOX_BASE_REV = '5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18'
 QWEN_ID = 'Qwen/Qwen3-TTS-12Hz-0.6B-Base'
 QWEN_REV = '5d83992436eae1d760afd27aff78a71d676296fc'
+# O limite curto é suficiente para as três frases de teste e reduz o impacto de EOS ausente.
+QWEN_LANGUAGE = 'Portuguese'  # idioma explicitamente passado à API; não usar detecção automática
+QWEN_MAX_NEW_TOKENS = 128
+QWEN_MAX_AUDIO_SECONDS = 15.0
 
 ROOT.mkdir(parents=True, exist_ok=True)
 if shutil.disk_usage(ROOT).free < 15 * 1024**3:
@@ -46,15 +52,30 @@ CHILD_ENV['PYTHONFAULTHANDLER'] = '1'
 CHILD_ENV['USE_TF'] = '0'
 CHILD_ENV['USE_FLAX'] = '0'
 
-def run_streamed(cmd, label, env=None):
+def run_streamed(cmd, label, env=None, timeout_seconds=None):
     """Stream child logs into the Colab cell, including setup/preflight failures."""
     print(f'\n[{label}] iniciando; logs do processo aparecem abaixo...', flush=True)
     proc = subprocess.Popen(cmd, env=env or CHILD_ENV, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                             text=True, bufsize=1)
     assert proc.stdout is not None
-    for line in proc.stdout:
-        print(line, end='', flush=True)
-    code = proc.wait()
+    timed_out = threading.Event()
+    timer = None
+    if timeout_seconds is not None:
+        def stop_timed_out_process():
+            timed_out.set()
+            proc.kill()
+        timer = threading.Timer(timeout_seconds, stop_timed_out_process)
+        timer.daemon = True
+        timer.start()
+    try:
+        for line in proc.stdout:
+            print(line, end='', flush=True)
+        code = proc.wait()
+    finally:
+        if timer is not None:
+            timer.cancel()
+    if timed_out.is_set():
+        raise TimeoutError(f'{label} excedeu {timeout_seconds}s; processo encerrado para evitar espera indefinida.')
     if code:
         raise RuntimeError(f'{label} encerrou com código {code}; consulte o log do processo imediatamente acima.')
 
@@ -90,6 +111,11 @@ if ref_seconds < 2.0:
     raise ValueError('Referência muito curta (<2 s). Escolha uma gravação limpa mais longa.')
 if ref_seconds < 5.0:
     print('AVISO: referência abaixo de 5 s; a clonagem pode ficar menos estável. Se puder, use 6–15 s de fala limpa da mesma voz.')
+if not REF_TEXT.strip():
+    REF_TEXT = input('Digite a transcrição literal de TODO o WAV de referência (não o texto-alvo): ').strip()
+if not REF_TEXT:
+    raise ValueError('A transcrição da referência é obrigatória para o Qwen; precisa corresponder ao WAV enviado.')
+print(f'Transcrição da referência recebida ({len(REF_TEXT)} caracteres); idioma do Qwen será Português.')
 
 # Os Spaces fixam Torch/Torchaudio 2.8.0; para a T4, use os wheels CUDA 12.8.
 # Não herde os binários Torch 2.11/CUDA 13 nem a torchvision global do Colab:
@@ -296,6 +322,7 @@ qwen_runner.write_text(textwrap.dedent(r'''
     from pathlib import Path
     root=Path(sys.argv[1]); ref_path=Path(sys.argv[2]); ref_text=sys.argv[3]
     texts=json.loads(Path(sys.argv[4]).read_text(encoding='utf-8'))
+    max_new_tokens=int(sys.argv[5]); max_audio_seconds=float(sys.argv[6]); language=sys.argv[7]
     # Use the same isolated Torch/CUDA stack as the Chatterbox run.
     sys.path.insert(0, str(root / 'torch_runtime'))
     import google
@@ -308,6 +335,7 @@ qwen_runner.write_text(textwrap.dedent(r'''
     print('Protobuf do runner:', google.protobuf.__version__, google.protobuf.__file__, flush=True)
     assert tuple(map(int, google.protobuf.__version__.split('.')[:3])) >= (6, 31, 1), 'protobuf isolado não está no sys.path do runner'
     import soundfile as sf
+    import numpy as np
     import torch
     from huggingface_hub import snapshot_download
     # Qwen TTS also does not need vision; keep the kernel's optional torchvision out.
@@ -330,21 +358,30 @@ qwen_runner.write_text(textwrap.dedent(r'''
         torch.manual_seed(1234)
         t0=time.perf_counter()
         wavs,sr=model.generate_voice_clone(
-            text=text, language='Portuguese', ref_audio=str(ref_path), ref_text=ref_text,
+            text=text, language=language, ref_audio=str(ref_path), ref_text=ref_text,
+            max_new_tokens=max_new_tokens,
         )
         elapsed=time.perf_counter()-t0
         arr=wavs[0]
+        duration=len(arr)/sr
+        if not np.isfinite(arr).all():
+            raise RuntimeError(f'Qwen frase {i}: áudio contém valores não finitos; não será salvo/reproduzido.')
+        if duration > max_audio_seconds:
+            raise RuntimeError(
+                f'Qwen frase {i}: áudio patológico de {duration:.2f}s excede o limite '
+                f'de {max_audio_seconds:.0f}s; não será salvo/reproduzido. '
+                f'O limite de geração foi {max_new_tokens} tokens.'
+            )
         path=root/f'qwen3_tts_pt_{i:02d}.wav'
         sf.write(path,arr,sr)
-        duration=len(arr)/sr
         row={'model':'Qwen3-TTS-12Hz-0.6B-Base','text':text,'path':str(path),'duration_s':duration,'generation_s':elapsed,'rtf':elapsed/max(duration,1e-9)}
         rows.append(row)
         print(json.dumps(row,ensure_ascii=False))
-    (root/'qwen3_tts_metrics.json').write_text(json.dumps({'model_repo':'Qwen/Qwen3-TTS-12Hz-0.6B-Base','model_revision':'5d83992436eae1d760afd27aff78a71d676296fc','package':'qwen-tts==0.1.1','dtype':'float32','load_seconds':load_s,'results':rows},ensure_ascii=False,indent=2),encoding='utf-8')
+    (root/'qwen3_tts_metrics.json').write_text(json.dumps({'model_repo':'Qwen/Qwen3-TTS-12Hz-0.6B-Base','model_revision':'5d83992436eae1d760afd27aff78a71d676296fc','package':'qwen-tts==0.1.1','dtype':'float32','language':language,'max_new_tokens':max_new_tokens,'max_audio_seconds':max_audio_seconds,'load_seconds':load_s,'results':rows},ensure_ascii=False,indent=2),encoding='utf-8')
 '''), encoding='utf-8')
 
 print('\nExecutando Qwen3-TTS Base 0.6B (ref_text deve corresponder literalmente ao WAV)...')
-run_streamed([str(qwen_py), '-X', 'faulthandler', '-u', str(qwen_runner), str(ROOT), str(REF_WAV), REF_TEXT, str(texts_json)], 'Qwen3-TTS')
+run_streamed([str(qwen_py), '-X', 'faulthandler', '-u', str(qwen_runner), str(ROOT), str(REF_WAV), REF_TEXT, str(texts_json), str(QWEN_MAX_NEW_TOKENS), str(QWEN_MAX_AUDIO_SECONDS), QWEN_LANGUAGE], 'Qwen3-TTS', timeout_seconds=180)
 
 # Toca todas as amostras no notebook, intercaladas por frase para comparação cega.
 from IPython.display import Audio, display, Markdown

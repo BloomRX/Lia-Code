@@ -128,6 +128,9 @@ chat_runner.write_text(textwrap.dedent(r'''
     # torch.compile; mark Triton unavailable before those optional imports.
     import torch.utils._triton as _torch_triton
     _torch_triton.has_triton_package = lambda: False
+    # Block direct optional imports too (e.g. if TorchDynamo cached the original
+    # probe before the override). PyTorch treats this as Triton not installed.
+    sys.modules['triton'] = None
     from huggingface_hub import snapshot_download
 
     root = Path(sys.argv[1]); space_dir = Path(sys.argv[2])

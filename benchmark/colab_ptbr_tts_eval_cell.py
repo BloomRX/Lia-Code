@@ -123,6 +123,11 @@ chat_runner.write_text(textwrap.dedent(r'''
     import numpy as np
     import soundfile as sf
     import torch
+    # Colab's bundled Triton currently segfaults when Torch probes it during
+    # optional TorchDynamo/TorchAO imports. This TTS inference path does not use
+    # torch.compile; mark Triton unavailable before those optional imports.
+    import torch.utils._triton as _torch_triton
+    _torch_triton.has_triton_package = lambda: False
     from huggingface_hub import snapshot_download
 
     root = Path(sys.argv[1]); space_dir = Path(sys.argv[2])

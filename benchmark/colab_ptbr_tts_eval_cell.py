@@ -127,6 +127,12 @@ chat_runner.write_text(textwrap.dedent(r'''
 
     root = Path(sys.argv[1]); space_dir = Path(sys.argv[2])
     ref_path = Path(sys.argv[3]); texts = json.loads(Path(sys.argv[4]).read_text(encoding='utf-8'))
+    # Colab's system torchvision is ABI-incompatible with its preinstalled Torch
+    # (torchvision::nms missing). Chatterbox's Llama TTS path does not use vision;
+    # tell Transformers 4.46 to skip the optional torchvision integration rather
+    # than modifying or reinstalling Colab's global Torch/torchvision packages.
+    import transformers.utils.import_utils as _hf_import_utils
+    _hf_import_utils._torchvision_available = False
     sys.path.insert(0, str(space_dir))
     from chatterbox.src.chatterbox.tts import ChatterboxTTS
 

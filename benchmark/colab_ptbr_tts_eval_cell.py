@@ -263,7 +263,22 @@ chat_runner.write_text(textwrap.dedent(r'''
 texts_json = ROOT / 'texts.json'
 texts_json.write_text(json.dumps(TEXTS, ensure_ascii=False), encoding='utf-8')
 print('\nExecutando Chatterbox PT-BR (referência permanece no Colab)...')
-run_streamed([str(chat_py), '-X', 'faulthandler', '-u', str(chat_runner), str(ROOT), str(space_dir), str(REF_WAV), str(texts_json)], 'Chatterbox PT-BR')
+chat_metrics_path = ROOT / 'chatterbox_ptbr_metrics.json'
+reuse_chat = False
+if chat_metrics_path.is_file():
+    try:
+        previous = json.loads(chat_metrics_path.read_text(encoding='utf-8'))
+        reuse_chat = (
+            previous.get('space_revision') == SPACE_REV
+            and [row.get('text') for row in previous.get('results', [])] == TEXTS
+            and all(Path(row.get('path', '')).is_file() for row in previous.get('results', []))
+        )
+    except Exception:
+        reuse_chat = False
+if reuse_chat:
+    print('Reutilizando as três amostras Chatterbox já concluídas em', ROOT)
+else:
+    run_streamed([str(chat_py), '-X', 'faulthandler', '-u', str(chat_runner), str(ROOT), str(space_dir), str(REF_WAV), str(texts_json)], 'Chatterbox PT-BR')
 
 # ---------- Qwen3-TTS: fine-tunable Base 0.6B, português genérico ----------
 qwen_py = make_env('qwen3_tts', [
@@ -305,11 +320,11 @@ qwen_runner.write_text(textwrap.dedent(r'''
     )
     t0=time.perf_counter()
     model=Qwen3TTSModel.from_pretrained(
-        model_dir, device_map='cuda:0', dtype=torch.float16,
+        model_dir, device_map='cuda:0', dtype=torch.float32,
         attn_implementation='sdpa',
     )
     load_s=time.perf_counter()-t0
-    print(f'Qwen3-TTS Base 0.6B carregado em {load_s:.2f}s (FP16/SDPA);')
+    print(f'Qwen3-TTS Base 0.6B carregado em {load_s:.2f}s (FP32/SDPA);')
     rows=[]
     for i,text in enumerate(texts,1):
         torch.manual_seed(1234)
@@ -325,7 +340,7 @@ qwen_runner.write_text(textwrap.dedent(r'''
         row={'model':'Qwen3-TTS-12Hz-0.6B-Base','text':text,'path':str(path),'duration_s':duration,'generation_s':elapsed,'rtf':elapsed/max(duration,1e-9)}
         rows.append(row)
         print(json.dumps(row,ensure_ascii=False))
-    (root/'qwen3_tts_metrics.json').write_text(json.dumps({'model_repo':'Qwen/Qwen3-TTS-12Hz-0.6B-Base','model_revision':'5d83992436eae1d760afd27aff78a71d676296fc','package':'qwen-tts==0.1.1','load_seconds':load_s,'results':rows},ensure_ascii=False,indent=2),encoding='utf-8')
+    (root/'qwen3_tts_metrics.json').write_text(json.dumps({'model_repo':'Qwen/Qwen3-TTS-12Hz-0.6B-Base','model_revision':'5d83992436eae1d760afd27aff78a71d676296fc','package':'qwen-tts==0.1.1','dtype':'float32','load_seconds':load_s,'results':rows},ensure_ascii=False,indent=2),encoding='utf-8')
 '''), encoding='utf-8')
 
 print('\nExecutando Qwen3-TTS Base 0.6B (ref_text deve corresponder literalmente ao WAV)...')
@@ -346,6 +361,6 @@ for i, text in enumerate(TEXTS, 1):
 print('Latência de síntese (não é streaming/TTFA) e RTF:')
 for fn in ['chatterbox_ptbr_metrics.json','qwen3_tts_metrics.json']:
     data=json.loads((ROOT/fn).read_text(encoding='utf-8'))
-    print(fn, '| carga=%.2fs' % data['load_seconds'])
+    print(fn, '| dtype=%s | carga=%.2fs' % (data.get('dtype', 'default'), data['load_seconds']))
     for r in data['results']:
         print(r['model'], '| geração=%.2fs | áudio=%.2fs | RTF=%.3f |' % (r['generation_s'],r['duration_s'],r['rtf']), r['text'])

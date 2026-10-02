@@ -49,16 +49,12 @@ def run_streamed(cmd, label):
     print(f'\n[{label}] iniciando; logs do processo aparecem abaixo...', flush=True)
     proc = subprocess.Popen(cmd, env=CHILD_ENV, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                             text=True, bufsize=1)
-    tail = []
     assert proc.stdout is not None
     for line in proc.stdout:
         print(line, end='', flush=True)
-        tail.append(line)
-        if len(tail) > 80:
-            del tail[:-80]
     code = proc.wait()
     if code:
-        raise RuntimeError(f'{label} encerrou com código {code}. O traceback completo está acima.\n' + ''.join(tail[-40:]))
+        raise RuntimeError(f'{label} encerrou com código {code}; consulte o log do processo imediatamente acima.')
 
 # Confirma GPU antes de baixar vários GB ou instalar pacotes.
 import torch
@@ -137,15 +133,15 @@ def make_env(name, packages):
             shutil.rmtree(env_dir)
         # Python 3.13 Colab may omit ensurepip; the runtime pip installs into this venv's target dir below.
         venv.EnvBuilder(with_pip=False, system_site_packages=True).create(str(env_dir))
-    # Colab expõe pacotes em dist-packages; inclua explicitamente a pasta Torch
-    # do kernel atual no venv, sem copiar nem alterar os pacotes globais.
+    # Exponha dependências auxiliares do kernel sem alterá-las; os pacotes
+    # explícitos do experimento (Torch e protobuf) têm precedência nos runners.
     site_dirs = [p for p in sys.path if p and ('site-packages' in p or 'dist-packages' in p) and Path(p).is_dir()]
     venv_site = next((p for p in (env_dir / 'lib').glob('python*/site-packages')), None)
     if venv_site is None:
         raise RuntimeError('Não encontrei site-packages no ambiente isolado ' + str(env_dir))
     if site_dirs:
         (venv_site / 'colab_kernel_paths.pth').write_text('\n'.join(dict.fromkeys(site_dirs)) + '\n', encoding='utf-8')
-    marker = env_dir / '.lia_deps_ready'
+    marker = env_dir / '.lia_deps_ready_v2'
     if not marker.exists():
         cmd = [sys.executable, '-m', 'pip', 'install', '--disable-pip-version-check',
               '--no-warn-script-location', '--upgrade', '--target', str(venv_site), *packages]
@@ -158,7 +154,7 @@ chat_py = make_env('chatterbox_ptbr', [
     'numpy>=2.1,<2.4', 'resampy==0.4.3', 'librosa==0.11.0', 's3tokenizer',
     'transformers==4.46.3', 'diffusers==0.29.0', 'omegaconf==2.3.0',
     'resemble-perth==1.0.1', 'silero-vad==5.1.2', 'conformer==0.3.2',
-    'safetensors', 'huggingface_hub==0.30.2',
+    'safetensors', 'huggingface_hub==0.30.2', 'protobuf>=6.31.1,<7',
 ])
 
 space_dir = ROOT / 'chatterbox_ptbr_space'
@@ -237,7 +233,7 @@ qwen_site = next((p for p in (qwen_py.parent.parent / 'lib').glob('python*/site-
 if qwen_site is None:
     raise RuntimeError('Não encontrei site-packages no ambiente isolado Qwen.')
 subprocess.run([sys.executable, '-m', 'pip', 'install', '--disable-pip-version-check', '--no-warn-script-location',
-                '--upgrade', '--target', str(qwen_site), 'transformers==4.57.3', 'accelerate==1.12.0', 'librosa', 'soundfile', 'sox', 'onnxruntime', 'einops', 'huggingface_hub==0.36.2'], check=True, env=CHILD_ENV)
+                '--upgrade', '--target', str(qwen_site), 'transformers==4.57.3', 'accelerate==1.12.0', 'librosa', 'soundfile', 'sox', 'onnxruntime', 'einops', 'huggingface_hub==0.36.2', 'protobuf>=6.31.1,<7'], check=True, env=CHILD_ENV)
 
 qwen_runner = ROOT / 'run_qwen_pt.py'
 qwen_runner.write_text(textwrap.dedent(r'''

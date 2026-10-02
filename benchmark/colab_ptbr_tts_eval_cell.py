@@ -113,25 +113,37 @@ if not TORCH_RUNTIME_MARKER.exists():
 else:
     print('Reutilizando pilha Torch isolada em', TORCH_RUNTIME)
 
-# Carregue o Protobuf compatível no caminho prioritário, ANTES de qualquer
-# importação de TensorFlow/Transformers que poderia inicializar o Protobuf global.
-PROTOBUF_RUNTIME_MARKER = ROOT / '.protobuf_runtime_ready'
-if not PROTOBUF_RUNTIME_MARKER.exists():
+# Protobuf 6.x precisa preceder o Protobuf antigo do Colab. O namespace
+# `google` pode ser um pacote regular global que esconde a pasta isolada; os
+# runners estendem explicitamente google.__path__ antes de importar protobuf.
+PROTOBUF_INIT = TORCH_RUNTIME / 'google' / 'protobuf' / '__init__.py'
+if not PROTOBUF_INIT.is_file():
     subprocess.run([
         sys.executable, '-m', 'pip', 'install', '--disable-pip-version-check',
         '--no-warn-script-location', '--no-cache-dir', '--ignore-installed', '--no-deps',
         '--target', str(TORCH_RUNTIME), 'protobuf>=6.31.1,<7',
     ], check=True, env=CHILD_ENV)
-    PROTOBUF_RUNTIME_MARKER.write_text('protobuf>=6.31.1,<7 in isolated runtime\\n', encoding='utf-8')
+    if not PROTOBUF_INIT.is_file():
+        raise RuntimeError('pip não instalou Protobuf dentro de ' + str(TORCH_RUNTIME))
+    (ROOT / '.protobuf_runtime_ready').write_text('isolated protobuf>=6.31.1,<7\\n', encoding='utf-8')
 
 probe_env = CHILD_ENV.copy()
 probe_env['PYTHONPATH'] = str(TORCH_RUNTIME) + os.pathsep + probe_env.get('PYTHONPATH', '')
-probe = r"""import importlib.metadata, google.protobuf, torch, torchaudio
+probe_env['LIA_TORCH_RUNTIME'] = str(TORCH_RUNTIME)
+probe = r"""import os, sys, importlib.metadata, google
+from pathlib import Path
+local_google = Path(os.environ['LIA_TORCH_RUNTIME']) / 'google'
+google.__path__ = [str(local_google), *[p for p in google.__path__ if str(p) != str(local_google)]]
+for _name in list(sys.modules):
+    if _name == 'google.protobuf' or _name.startswith('google.protobuf.'):
+        del sys.modules[_name]
+import google.protobuf, torch, torchaudio
 print('Isolated Protobuf:', google.protobuf.__version__, google.protobuf.__file__)
 print('Isolated Torch/Torchaudio:', torch.__version__, torchaudio.__version__)
 print('Triton wheel metadata:', importlib.metadata.version('triton'))
 print('CUDA available:', torch.cuda.is_available())
 assert tuple(map(int, google.protobuf.__version__.split('.')[:3])) >= (6, 31, 1)
+assert Path(google.protobuf.__file__).resolve().is_relative_to(local_google.resolve()), 'Protobuf came from outside the isolated runtime'
 assert torch.__version__.startswith('2.8.0+cu128')
 assert torchaudio.__version__.startswith('2.8.0+cu128')
 assert torch.cuda.is_available(), 'Isolated CUDA stack cannot see the Colab GPU'
@@ -187,6 +199,12 @@ chat_runner.write_text(textwrap.dedent(r'''
     ref_path = Path(sys.argv[3]); texts = json.loads(Path(sys.argv[4]).read_text(encoding='utf-8'))
     # Prefer the locally installed, matched CUDA stack before Colab's global packages.
     sys.path.insert(0, str(root / 'torch_runtime'))
+    import google
+    _local_google = str(root / 'torch_runtime' / 'google')
+    google.__path__ = [_local_google, *[p for p in google.__path__ if str(p) != _local_google]]
+    for _name in list(sys.modules):
+        if _name == 'google.protobuf' or _name.startswith('google.protobuf.'):
+            del sys.modules[_name]
     import google.protobuf
     print('Protobuf do runner:', google.protobuf.__version__, google.protobuf.__file__, flush=True)
     assert tuple(map(int, google.protobuf.__version__.split('.')[:3])) >= (6, 31, 1), 'protobuf isolado não está no sys.path do runner'
@@ -265,6 +283,12 @@ qwen_runner.write_text(textwrap.dedent(r'''
     texts=json.loads(Path(sys.argv[4]).read_text(encoding='utf-8'))
     # Use the same isolated Torch/CUDA stack as the Chatterbox run.
     sys.path.insert(0, str(root / 'torch_runtime'))
+    import google
+    _local_google = str(root / 'torch_runtime' / 'google')
+    google.__path__ = [_local_google, *[p for p in google.__path__ if str(p) != _local_google]]
+    for _name in list(sys.modules):
+        if _name == 'google.protobuf' or _name.startswith('google.protobuf.'):
+            del sys.modules[_name]
     import google.protobuf
     print('Protobuf do runner:', google.protobuf.__version__, google.protobuf.__file__, flush=True)
     assert tuple(map(int, google.protobuf.__version__.split('.')[:3])) >= (6, 31, 1), 'protobuf isolado não está no sys.path do runner'

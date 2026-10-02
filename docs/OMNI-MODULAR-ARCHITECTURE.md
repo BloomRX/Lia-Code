@@ -1,6 +1,6 @@
 # Arquitetura modular Omni — proposta documental
 
-**Estado:** proposta, sem código executável, downloads ou instalações. O Qwen3-4B Q4_K_M está selecionado como base textual da prova de conceito; sua inferência Vulkan foi confirmada em `benchmark-results/lia-llm-comparison-20260930-085425.json`. Isso não valida os especialistas abaixo: todos permanecem candidatos documentais.
+**Estado:** arquitetura de integração futura; sem código executável, downloads ou instalações nesta proposta. Sequência confirmada pelo usuário em 2026-10-01: primeiro desenvolver/adaptar e aprovar os modelos especialistas separadamente; só depois iniciar a integração Lia-Omni. “Integrar/juntar” significa conectá-los por interfaces/orquestração, não fundir pesos. O Qwen3-4B Q4_K_M é apenas baseline textual (não LLM final); a tentativa Piper Plus é apenas experimento TTS e não foi aprovada por qualidade. A inferência Vulkan do Qwen foi confirmada em `benchmark-results/lia-llm-comparison-20260930-085425.json`, o que valida somente a execução de texto.
 
 ## Objetivos e limites
 

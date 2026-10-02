@@ -6,13 +6,15 @@ Criar a **Lia como assistente Omni local-first**: uma única experiência de usu
 
 Não tratar o benchmark de personalidade como objetivo principal da sessão. É uma fase subordinada e está pausada até o usuário reunir personagens de referência.
 
-## Decisão de arquitetura registrada — 2026-09-29
+## Plano principal confirmado pelo usuário — 2026-10-01
 
-**Começar com módulos especializados, substituíveis, coordenados por um orquestrador local — não fundir checkpoints nem treinar um modelo monolítico agora.** A Lia entregue ao usuário continua sendo uma única assistente Omni; modularidade é a estratégia para chegar lá com hardware limitado. Em paralelo, avaliar modelos Omni unificados quantizados como candidatos de substituição quando houver prova de runtime e memória.
+**Primeiro desenvolver, adaptar e validar separadamente os modelos especialistas da Lia (LLM, TTS, visão, ASR/áudio e outros necessários); somente depois integrar os modelos aprovados no sistema Lia-Omni.** Não antecipar a integração Omni enquanto os modelos especialistas ainda não atingiram seus próprios critérios de qualidade/compatibilidade. O Qwen3-4B é apenas baseline textual, e o Piper Plus é apenas uma tentativa TTS que não atingiu a qualidade desejada; nenhum dos dois está aprovado como modelo final.
 
-- Camadas a investigar: LLM/texto e orquestração; visão; ASR/entendimento de áudio; TTS; vídeo, inicialmente combinando amostragem de quadros com áudio sincronizado.
-- Usar interfaces comuns entre os módulos para poder trocar um especialista por um modelo unificado sem refazer a aplicação.
-- Não “juntar” pesos de LLM, ASR, TTS e visão por simples merge: arquiteturas, tokenizers e objetivos diferem. Qualquer adaptação conjunta/LoRA fica para depois de uma prova de conceito e de um conjunto de dados aprovado.
+“Criar modelos próprios” pode significar adaptar um modelo-base para a Lia; não implica treinar todas as arquiteturas do zero. Após o desenvolvimento isolado, “juntar” significa integrar/orquestrar modelos por interfaces, não fundir os pesos heterogêneos num checkpoint monolítico. Manter componentes substituíveis e avaliar eventual adaptação conjunta apenas como etapa posterior, com prova de conceito e dados aprovados.
+
+- Desenvolver e avaliar LLM/texto, TTS, visão, ASR/entendimento de áudio e vídeo em trilhas separadas.
+- Só iniciar a fase de integração Lia-Omni quando os especialistas selecionados estiverem aprovados de forma independente; então validar os fluxos combinados.
+- Interfaces modulares são uma decisão de implementação para a integração futura, não uma mudança da sequência escolhida pelo usuário.
 - Não declarar a Lia “Omni” só por aceitar imagens; testar entradas e saídas de cada modalidade separadamente e em conjunto.
 
 Motivo para começar modular: o alvo atual é uma RX 580 com 8 GB de VRAM. Como referência, a documentação oficial do Qwen2.5-Omni lista 18,38 GB como mínimo teórico BF16 para inferência de vídeo de 15 segundos com Transformers (e alerta que o uso real costuma ser maior). Isso não exclui quantização ou outros runtimes, mas exige uma prova prática antes de escolher esse caminho. [Documentação oficial](https://github.com/QwenLM/Qwen2.5-Omni#minimum-gpu-memory-requirements).

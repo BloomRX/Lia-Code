@@ -15,9 +15,15 @@ Desenvolver uma assistente local para a Lia com capacidades **omnimodais**: conv
 - Próximo foco escolhido: TTS primeiro, com ASR separado mas correlacionado no fluxo de voz. A avaliação documental de Piper Faber ONNX e Kokoro, dependências/licenças e protocolo de audição está em [`TTS-EVALUATION.md`](TTS-EVALUATION.md). Sem downloads ou instalações nesta fase.
 - A bateria de personalidade permanece pausada até chegar a lista de personas.
 
-## Próximo marco: arquitetura modular Omni
+## Sequência obrigatória confirmada pelo usuário — 2026-10-01
 
-A base textual para a prova de conceito é Qwen3-4B; o runtime Vulkan carregou todas as camadas reportadas e registrou buffers, conforme o diagnóstico acima. Isso valida apenas inferência de texto, não multimodalidade. Retomar a avaliação documental dos módulos de entrada/saída e runtimes; manter o LLM central e os especialistas substituíveis. Não baixar novos modelos nem instalar/atualizar runtime nesta fase. O Phi já baixado continua registrado para limpeza posterior:
+A ordem do projeto é: **(1) desenvolver/adaptar e aprovar cada modelo especialista separadamente; (2) só então integrar os modelos aprovados na Lia-Omni.** Não antecipar a construção/integração do sistema Omni enquanto LLM, TTS e os demais especialistas ainda estiverem em avaliação. “Integrar/juntar” significa conectá-los por interfaces e orquestração, não fundir seus pesos em um checkpoint.
+
+“Modelo próprio” pode ser obtido por adaptação de um modelo-base; não pressupõe treinar arquitetura do zero. O Qwen3-4B é somente baseline de LLM, não modelo final aprovado. A tentativa Piper Plus é somente experimento TTS e não atingiu a qualidade desejada; não chamá-lo de TTS final nem repetir o treino sem diagnóstico/critério.
+
+## Próximo marco: desenvolver e validar modelos especialistas
+
+Trabalhar em trilhas isoladas, começando pelo TTS conforme foco escolhido, e avaliar os próximos especialistas sem integração prematura. A base textual Qwen3-4B já passou por alguns testes e o runtime Vulkan carregou todas as camadas reportadas; isso valida apenas um baseline de inferência textual, não um LLM final nem multimodalidade. Não baixar novos modelos nem instalar/atualizar runtime nesta fase sem respeitar os gates e autorizações registrados. O Phi já baixado continua registrado para limpeza posterior:
 
 1. **Modalidades de entrada:** texto, imagem, fala, áudio não verbal e vídeo (incluindo áudio sincronizado).
 2. **Modalidades de saída:** texto e voz; qualidade e latência de fala em português brasileiro.
@@ -29,9 +35,9 @@ Uma opção a investigar é Qwen2.5-Omni-3B: o projeto oficial descreve entradas
 
 ## Fases seguintes
 
-- **Fase A — compatibilidade:** comparar candidatos de imagem/vídeo, ASR, eventos sonoros, TTS e demux de mídia; conferir formato, licença de código/pesos/dependências, suporte real em Windows/Vulkan e limites de memória. A shortlist e os pontos de risco estão em [`OMNI-MODULAR-ARCHITECTURE.md`](OMNI-MODULAR-ARCHITECTURE.md). Sem baixar pesos.
-- **Fase B — prova de conceito:** depois de escolher um módulo de baixo risco, registrar origem, revisão, licença e caminho externo dos pesos; testar com amostras próprias pequenas. Se isso exigir instalar, compilar ou atualizar runtime/dependências, pedir autorização antes. Medir qualidade, memória, latência e limites por modalidade.
-- **Fase C — integração Lia:** estabelecer interface única de conversa, streaming, interrupção de fala, permissões de câmera/microfone e funcionamento offline; manter módulos substituíveis quando um único modelo não cobrir uma tarefa.
+- **Fase A — compatibilidade e seleção de cada especialista:** comparar candidatos de LLM, TTS, visão, ASR/áudio e vídeo; conferir formato, licença de código/pesos/dependências, suporte real em Windows/Vulkan e limites de memória. A shortlist e os pontos de risco estão em [`OMNI-MODULAR-ARCHITECTURE.md`](OMNI-MODULAR-ARCHITECTURE.md). Sem baixar pesos antes do gate de autorização/registro.
+- **Fase B — desenvolver/adaptar e aprovar modelos separadamente:** registrar origem, revisão, licença e caminho externo dos pesos; adaptar/testar cada modelo com dados próprios aprovados. Se exigir instalar, compilar ou atualizar runtime/dependências, pedir autorização antes. Medir qualidade, memória, latência e limites por especialista. Nenhum módulo passa a final por mera execução bem-sucedida.
+- **Fase C — integração Lia-Omni (bloqueada até aprovação da Fase B):** somente depois de os modelos especialistas selecionados atingirem os critérios independentes, estabelecer interface única de conversa, streaming, interrupção de fala, permissões de câmera/microfone e funcionamento offline. Integrar por interfaces/orquestração, sem fundir checkpoints heterogêneos.
 - **Fase D — personas:** depois que o usuário trouxer a lista de personagens, criar perfis configuráveis e exemplos originais para cada persona, com conjunto de avaliação separado. Só então comparar prompt, adapters/LoRA e outras técnicas, após verificar hardware, licença e dados.
 
 ## Critérios de decisão

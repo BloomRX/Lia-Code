@@ -42,6 +42,23 @@ CHILD_ENV = os.environ.copy()
 CHILD_ENV['HF_HOME'] = str(ROOT / 'hf_home')
 CHILD_ENV['PIP_CACHE_DIR'] = str(ROOT / 'pip_cache')
 CHILD_ENV['TORCH_HOME'] = str(ROOT / 'torch_home')
+CHILD_ENV['PYTHONFAULTHANDLER'] = '1'
+
+def run_streamed(cmd, label):
+    """Stream child logs into the Colab cell and retain a concise failure tail."""
+    print(f'\n[{label}] iniciando; logs do processo aparecem abaixo...', flush=True)
+    proc = subprocess.Popen(cmd, env=CHILD_ENV, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                            text=True, bufsize=1)
+    tail = []
+    assert proc.stdout is not None
+    for line in proc.stdout:
+        print(line, end='', flush=True)
+        tail.append(line)
+        if len(tail) > 80:
+            del tail[:-80]
+    code = proc.wait()
+    if code:
+        raise RuntimeError(f'{label} encerrou com código {code}. O traceback completo está acima.\n' + ''.join(tail[-40:]))
 
 # Confirma GPU antes de baixar vários GB ou instalar pacotes.
 import torch
@@ -76,8 +93,42 @@ if ref_seconds < 2.0:
 if ref_seconds < 5.0:
     print('AVISO: referência abaixo de 5 s; a clonagem pode ficar menos estável. Se puder, use 6–15 s de fala limpa da mesma voz.')
 
-# Venvs isolados com acesso ao Torch já instalado no Colab. Não substitui nem
-# atualiza o ambiente principal de treino. Os modelos ficam apenas em /content.
+# O Space PT-BR fixa Torch/Torchaudio 2.8.0 e foi publicado para CUDA 12.8.
+# Não misture essa pilha com os binários Torch 2.11/CUDA 13 e torchvision/Triton
+# que vieram no kernel do Colab: instale uma pilha compatível em pasta isolada.
+TORCH_RUNTIME = ROOT / 'torch_runtime'
+TORCH_RUNTIME_MARKER = ROOT / '.torch_runtime_ready'
+if not TORCH_RUNTIME_MARKER.exists():
+    if TORCH_RUNTIME.exists():
+        shutil.rmtree(TORCH_RUNTIME)
+    TORCH_RUNTIME.mkdir(parents=True, exist_ok=True)
+    torch_cmd = [
+        sys.executable, '-m', 'pip', 'install', '--disable-pip-version-check',
+        '--no-warn-script-location', '--no-cache-dir', '--only-binary=:all:', '--ignore-installed',
+        '--target', str(TORCH_RUNTIME),
+        '--index-url', 'https://download.pytorch.org/whl/cu128',
+        '--extra-index-url', 'https://pypi.org/simple',
+        'torch==2.8.0+cu128', 'torchvision==0.23.0+cu128', 'torchaudio==2.8.0+cu128', 'numpy>=2.1,<2.4',
+    ]
+    subprocess.run(torch_cmd, check=True, env=CHILD_ENV)
+    probe_env = CHILD_ENV.copy()
+    probe_env['PYTHONPATH'] = str(TORCH_RUNTIME) + os.pathsep + probe_env.get('PYTHONPATH', '')
+    probe = r"""import torch, torchvision, torchaudio, triton
+print('Isolated stack:', torch.__version__, torchvision.__version__, torchaudio.__version__, 'Triton', triton.__version__)
+print('CUDA available:', torch.cuda.is_available())
+assert torch.__version__.startswith('2.8.0+cu128')
+assert torchvision.__version__.startswith('0.23.0+cu128')
+assert torchaudio.__version__.startswith('2.8.0+cu128')
+assert torch.cuda.is_available(), 'Isolated CUDA stack cannot see the Colab GPU'
+assert torchvision.extension._has_ops(), 'Matched torchvision native ops did not load'
+"""
+    subprocess.run([sys.executable, '-X', 'faulthandler', '-c', probe], check=True, env=probe_env)
+    TORCH_RUNTIME_MARKER.write_text('torch 2.8.0+cu128; torchvision 0.23.0+cu128; torchaudio 2.8.0+cu128\n', encoding='utf-8')
+else:
+    print('Reutilizando pilha Torch isolada em', TORCH_RUNTIME)
+
+# Venvs de bibliotecas de aplicação; o Torch compatível fica isolado em TORCH_RUNTIME.
+# Nada altera os pacotes globais do kernel.
 def make_env(name, packages):
     env_dir = ROOT / ('venv-' + name)
     py = env_dir / 'bin' / 'python'
@@ -120,27 +171,14 @@ chat_runner = ROOT / 'run_chatterbox_ptbr.py'
 chat_runner.write_text(textwrap.dedent(r'''
     import json, sys, time
     from pathlib import Path
+    root = Path(sys.argv[1]); space_dir = Path(sys.argv[2])
+    ref_path = Path(sys.argv[3]); texts = json.loads(Path(sys.argv[4]).read_text(encoding='utf-8'))
+    # Prefer the locally installed, matched CUDA stack before Colab's global packages.
+    sys.path.insert(0, str(root / 'torch_runtime'))
     import numpy as np
     import soundfile as sf
     import torch
-    # Colab's bundled Triton currently segfaults when Torch probes it during
-    # optional TorchDynamo/TorchAO imports. This TTS inference path does not use
-    # torch.compile; mark Triton unavailable before those optional imports.
-    import torch.utils._triton as _torch_triton
-    _torch_triton.has_triton_package = lambda: False
-    # Block direct optional imports too (e.g. if TorchDynamo cached the original
-    # probe before the override). PyTorch treats this as Triton not installed.
-    sys.modules['triton'] = None
     from huggingface_hub import snapshot_download
-
-    root = Path(sys.argv[1]); space_dir = Path(sys.argv[2])
-    ref_path = Path(sys.argv[3]); texts = json.loads(Path(sys.argv[4]).read_text(encoding='utf-8'))
-    # Colab's system torchvision is ABI-incompatible with its preinstalled Torch
-    # (torchvision::nms missing). Chatterbox's Llama TTS path does not use vision;
-    # tell Transformers 4.46 to skip the optional torchvision integration rather
-    # than modifying or reinstalling Colab's global Torch/torchvision packages.
-    import transformers.utils.import_utils as _hf_import_utils
-    _hf_import_utils._torchvision_available = False
     sys.path.insert(0, str(space_dir))
     from chatterbox.src.chatterbox.tts import ChatterboxTTS
 
@@ -189,7 +227,7 @@ chat_runner.write_text(textwrap.dedent(r'''
 texts_json = ROOT / 'texts.json'
 texts_json.write_text(json.dumps(TEXTS, ensure_ascii=False), encoding='utf-8')
 print('\nExecutando Chatterbox PT-BR (referência permanece no Colab)...')
-subprocess.run([str(chat_py), str(chat_runner), str(ROOT), str(space_dir), str(REF_WAV), str(texts_json)], check=True, env=CHILD_ENV)
+run_streamed([str(chat_py), '-X', 'faulthandler', '-u', str(chat_runner), str(ROOT), str(space_dir), str(REF_WAV), str(texts_json)], 'Chatterbox PT-BR')
 
 # ---------- Qwen3-TTS: fine-tunable Base 0.6B, português genérico ----------
 qwen_py = make_env('qwen3_tts', [
@@ -205,13 +243,14 @@ qwen_runner = ROOT / 'run_qwen_pt.py'
 qwen_runner.write_text(textwrap.dedent(r'''
     import json, sys, time
     from pathlib import Path
+    root=Path(sys.argv[1]); ref_path=Path(sys.argv[2]); ref_text=sys.argv[3]
+    texts=json.loads(Path(sys.argv[4]).read_text(encoding='utf-8'))
+    # Use the same isolated Torch/CUDA stack as the Chatterbox run.
+    sys.path.insert(0, str(root / 'torch_runtime'))
     import soundfile as sf
     import torch
     from huggingface_hub import snapshot_download
     from qwen_tts import Qwen3TTSModel
-
-    root=Path(sys.argv[1]); ref_path=Path(sys.argv[2]); ref_text=sys.argv[3]
-    texts=json.loads(Path(sys.argv[4]).read_text(encoding='utf-8'))
     model_dir=snapshot_download(
         repo_id='Qwen/Qwen3-TTS-12Hz-0.6B-Base',
         revision='5d83992436eae1d760afd27aff78a71d676296fc',
@@ -242,7 +281,7 @@ qwen_runner.write_text(textwrap.dedent(r'''
 '''), encoding='utf-8')
 
 print('\nExecutando Qwen3-TTS Base 0.6B (ref_text deve corresponder literalmente ao WAV)...')
-subprocess.run([str(qwen_py), str(qwen_runner), str(ROOT), str(REF_WAV), REF_TEXT, str(texts_json)], check=True, env=CHILD_ENV)
+run_streamed([str(qwen_py), '-X', 'faulthandler', '-u', str(qwen_runner), str(ROOT), str(REF_WAV), REF_TEXT, str(texts_json)], 'Qwen3-TTS')
 
 # Toca todas as amostras no notebook, intercaladas por frase para comparação cega.
 from IPython.display import Audio, display, Markdown

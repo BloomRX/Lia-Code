@@ -43,6 +43,8 @@ CHILD_ENV['HF_HOME'] = str(ROOT / 'hf_home')
 CHILD_ENV['PIP_CACHE_DIR'] = str(ROOT / 'pip_cache')
 CHILD_ENV['TORCH_HOME'] = str(ROOT / 'torch_home')
 CHILD_ENV['PYTHONFAULTHANDLER'] = '1'
+CHILD_ENV['USE_TF'] = '0'
+CHILD_ENV['USE_FLAX'] = '0'
 
 def run_streamed(cmd, label):
     """Stream child logs into the Colab cell and retain a concise failure tail."""
@@ -107,21 +109,35 @@ if not TORCH_RUNTIME_MARKER.exists():
         'torch==2.8.0+cu128', 'torchvision==0.23.0+cu128', 'torchaudio==2.8.0+cu128', 'numpy>=2.1,<2.4',
     ]
     subprocess.run(torch_cmd, check=True, env=CHILD_ENV)
-    probe_env = CHILD_ENV.copy()
-    probe_env['PYTHONPATH'] = str(TORCH_RUNTIME) + os.pathsep + probe_env.get('PYTHONPATH', '')
-    probe = r"""import torch, torchvision, torchaudio, triton
+    TORCH_RUNTIME_MARKER.write_text('torch 2.8.0+cu128; torchvision 0.23.0+cu128; torchaudio 2.8.0+cu128\n', encoding='utf-8')
+else:
+    print('Reutilizando pilha Torch isolada em', TORCH_RUNTIME)
+
+# Carregue o Protobuf compatível no caminho prioritário, ANTES de qualquer
+# importação de TensorFlow/Transformers que poderia inicializar o Protobuf global.
+PROTOBUF_RUNTIME_MARKER = ROOT / '.protobuf_runtime_ready'
+if not PROTOBUF_RUNTIME_MARKER.exists():
+    subprocess.run([
+        sys.executable, '-m', 'pip', 'install', '--disable-pip-version-check',
+        '--no-warn-script-location', '--no-cache-dir', '--ignore-installed', '--no-deps',
+        '--target', str(TORCH_RUNTIME), 'protobuf>=6.31.1,<7',
+    ], check=True, env=CHILD_ENV)
+    PROTOBUF_RUNTIME_MARKER.write_text('protobuf>=6.31.1,<7 in isolated runtime\\n', encoding='utf-8')
+
+probe_env = CHILD_ENV.copy()
+probe_env['PYTHONPATH'] = str(TORCH_RUNTIME) + os.pathsep + probe_env.get('PYTHONPATH', '')
+probe = r"""import google.protobuf, torch, torchvision, torchaudio, triton
+print('Isolated Protobuf:', google.protobuf.__version__, google.protobuf.__file__)
 print('Isolated stack:', torch.__version__, torchvision.__version__, torchaudio.__version__, 'Triton', triton.__version__)
 print('CUDA available:', torch.cuda.is_available())
+assert tuple(map(int, google.protobuf.__version__.split('.')[:3])) >= (6, 31, 1)
 assert torch.__version__.startswith('2.8.0+cu128')
 assert torchvision.__version__.startswith('0.23.0+cu128')
 assert torchaudio.__version__.startswith('2.8.0+cu128')
 assert torch.cuda.is_available(), 'Isolated CUDA stack cannot see the Colab GPU'
 assert torchvision.extension._has_ops(), 'Matched torchvision native ops did not load'
 """
-    subprocess.run([sys.executable, '-X', 'faulthandler', '-c', probe], check=True, env=probe_env)
-    TORCH_RUNTIME_MARKER.write_text('torch 2.8.0+cu128; torchvision 0.23.0+cu128; torchaudio 2.8.0+cu128\n', encoding='utf-8')
-else:
-    print('Reutilizando pilha Torch isolada em', TORCH_RUNTIME)
+subprocess.run([sys.executable, '-X', 'faulthandler', '-c', probe], check=True, env=probe_env)
 
 # Venvs de bibliotecas de aplicação; o Torch compatível fica isolado em TORCH_RUNTIME.
 # Nada altera os pacotes globais do kernel.
@@ -171,6 +187,9 @@ chat_runner.write_text(textwrap.dedent(r'''
     ref_path = Path(sys.argv[3]); texts = json.loads(Path(sys.argv[4]).read_text(encoding='utf-8'))
     # Prefer the locally installed, matched CUDA stack before Colab's global packages.
     sys.path.insert(0, str(root / 'torch_runtime'))
+    import google.protobuf
+    print('Protobuf do runner:', google.protobuf.__version__, google.protobuf.__file__, flush=True)
+    assert tuple(map(int, google.protobuf.__version__.split('.')[:3])) >= (6, 31, 1), 'protobuf isolado não está no sys.path do runner'
     import numpy as np
     import soundfile as sf
     import torch
@@ -243,6 +262,9 @@ qwen_runner.write_text(textwrap.dedent(r'''
     texts=json.loads(Path(sys.argv[4]).read_text(encoding='utf-8'))
     # Use the same isolated Torch/CUDA stack as the Chatterbox run.
     sys.path.insert(0, str(root / 'torch_runtime'))
+    import google.protobuf
+    print('Protobuf do runner:', google.protobuf.__version__, google.protobuf.__file__, flush=True)
+    assert tuple(map(int, google.protobuf.__version__.split('.')[:3])) >= (6, 31, 1), 'protobuf isolado não está no sys.path do runner'
     import soundfile as sf
     import torch
     from huggingface_hub import snapshot_download

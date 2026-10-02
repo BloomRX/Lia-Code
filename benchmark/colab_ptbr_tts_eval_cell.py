@@ -81,24 +81,30 @@ if ref_seconds < 5.0:
 def make_env(name, packages):
     env_dir = ROOT / ('venv-' + name)
     py = env_dir / 'bin' / 'python'
-    if not py.exists():
-        venv.EnvBuilder(with_pip=True, system_site_packages=True).create(str(env_dir))
+    if not py.exists() or not (env_dir / 'pyvenv.cfg').exists():
+        if env_dir.exists():
+            shutil.rmtree(env_dir)
+        # Python 3.13 Colab may omit ensurepip; the runtime pip installs into this venv's target dir below.
+        venv.EnvBuilder(with_pip=False, system_site_packages=True).create(str(env_dir))
     # Colab expõe pacotes em dist-packages; inclua explicitamente a pasta Torch
     # do kernel atual no venv, sem copiar nem alterar os pacotes globais.
     site_dirs = [p for p in sys.path if p and ('site-packages' in p or 'dist-packages' in p) and Path(p).is_dir()]
     venv_site = next((p for p in (env_dir / 'lib').glob('python*/site-packages')), None)
-    if venv_site and site_dirs:
+    if venv_site is None:
+        raise RuntimeError('Não encontrei site-packages no ambiente isolado ' + str(env_dir))
+    if site_dirs:
         (venv_site / 'colab_kernel_paths.pth').write_text('\n'.join(dict.fromkeys(site_dirs)) + '\n', encoding='utf-8')
     marker = env_dir / '.lia_deps_ready'
     if not marker.exists():
-        cmd = [str(py), '-m', 'pip', 'install', '--disable-pip-version-check', '--no-warn-script-location', *packages]
+        cmd = [sys.executable, '-m', 'pip', 'install', '--disable-pip-version-check',
+              '--no-warn-script-location', '--upgrade', '--target', str(venv_site), *packages]
         subprocess.run(cmd, check=True, env=CHILD_ENV)
         marker.write_text('ok\n', encoding='utf-8')
     return py
 
 # ---------- Chatterbox: pack PT-BR dedicado + referência da Lia ----------
 chat_py = make_env('chatterbox_ptbr', [
-    'numpy==1.26.0', 'resampy==0.4.3', 'librosa==0.10.0', 's3tokenizer',
+    'numpy>=2.1,<2.4', 'resampy==0.4.3', 'librosa==0.11.0', 's3tokenizer',
     'transformers==4.46.3', 'diffusers==0.29.0', 'omegaconf==2.3.0',
     'resemble-perth==1.0.1', 'silero-vad==5.1.2', 'conformer==0.3.2',
     'safetensors', 'huggingface_hub==0.30.2',
@@ -175,8 +181,11 @@ subprocess.run([str(chat_py), str(chat_runner), str(ROOT), str(space_dir), str(R
 qwen_py = make_env('qwen3_tts', [
     '--no-deps', 'qwen-tts==0.1.1',
 ])
-subprocess.run([str(qwen_py), '-m', 'pip', 'install', '--disable-pip-version-check', '--no-warn-script-location',
-                'transformers==4.57.3', 'accelerate==1.12.0', 'librosa', 'soundfile', 'sox', 'onnxruntime', 'einops', 'huggingface_hub==0.36.2'], check=True, env=CHILD_ENV)
+qwen_site = next((p for p in (qwen_py.parent.parent / 'lib').glob('python*/site-packages')), None)
+if qwen_site is None:
+    raise RuntimeError('Não encontrei site-packages no ambiente isolado Qwen.')
+subprocess.run([sys.executable, '-m', 'pip', 'install', '--disable-pip-version-check', '--no-warn-script-location',
+                '--upgrade', '--target', str(qwen_site), 'transformers==4.57.3', 'accelerate==1.12.0', 'librosa', 'soundfile', 'sox', 'onnxruntime', 'einops', 'huggingface_hub==0.36.2'], check=True, env=CHILD_ENV)
 
 qwen_runner = ROOT / 'run_qwen_pt.py'
 qwen_runner.write_text(textwrap.dedent(r'''

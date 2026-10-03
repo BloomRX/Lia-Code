@@ -37,7 +37,11 @@ O usuário executou o A/B adicionado ao Colab usando a referência já cadastrad
 | Combo recomendado | 0,7 | 0,3 | 5,24 s | 5,12 s | 0,978 |
 | Qwen Base, amostragem padrão | — | — | 5,36 s | 13,36 s | 2,493 |
 
-O usuário ainda não informou qual versão soou mais expressiva/natural ou se a semelhança vocal se manteve nesse texto; métricas não substituem essa avaliação. Não alterar parâmetros nem declarar vencedor antes desse retorno.
+**Escuta do usuário:** Chatterbox 1 e 2 pareceram quase iguais; começam alegres, mas claramente artificiais. 3 e 4 soaram um pouco mais alegres, porém o timbre metálico/agudo impediu avaliar bem a naturalidade. Qwen foi mais expressivo, mas tenso/sério em vez de alegre; manteve naturalidade e semelhança vocal. Logo, menor CFG parece promissor para a expressão Chatterbox, mas não resolve o timbre; o combo de exaggeration não deve ser adotado sem resolver essa limitação.
+
+**Hipótese para o Qwen tenso:** a própria referência de 16,74 s parece conter fala dramaticamente confrontacional (segundo a hipótese Whisper, aceita sem correção). Em clonagem ICL, a prosódia emocional da referência pode estar sendo transferida ao texto alegre. Isso é hipótese, não causalidade comprovada; o modelo Base não documenta `instruct` de emoção. A próxima comparação informativa é sintetizar o mesmo texto com uma referência curta alegre da dubladora, transcrição fiel e o mesmo Qwen Base; isso testa influência da prosódia de referência sem mexer em sampling aleatoriamente.
+
+Métricas não substituem avaliação auditiva, e os WAVs permanecem privados. O parecer acima veio diretamente do usuário; nenhuma nova síntese é necessária até a próxima comparação de referência.
 
 ### Próxima etapa — expressividade antes de persona
 

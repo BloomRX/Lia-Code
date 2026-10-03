@@ -8,15 +8,22 @@ Este documento registra dois objetivos diferentes: benchmark rápido de motores/
 
 Para mensagens curtas e resposta rápida, **CPU ganhou no benchmark Piper Faber desta máquina**: latência mediana do primeiro áudio 80,5 ms versus 137,7 ms em DirectML; síntese total 297 ms versus 652 ms. No parágrafo maior, CPU ainda entregou o primeiro áudio antes (88,7 ms versus 219,5 ms), mas DirectML terminou o parágrafo mais rápido (1,155 s versus 1,494 s). Isso compara execução/latência desse voicepack, não naturalidade ou adaptação da voz da Lia.
 
-## Execução Colab Qwen/Chatterbox na T4 — diagnóstico atual
+## Execução Colab Qwen/Chatterbox na T4 — resultado atual
 
-Na execução mais recente compartilhada pelo usuário, a referência era `16,74 s`, 44,1 kHz, estéreo. Chatterbox PT-BR terminou as três frases em 4,00–5,52 s, com RTF de 0,948–1,500. O Qwen estava explicitamente configurado com `language='Portuguese'` (não espanhol), mas a saída foi instável: as frases 1 e 2 viraram WAVs de 655,28 s e levaram 1.727,62 s e 1.720,46 s; a frase 3 gerou 3,76 s em 9,74 s. O usuário também relatou idioma/acentuação inadequados no começo e repetição prolongada. Trata-se de falha patológica de EOS/geração, não de uma medição válida de velocidade/qualidade.
+A referência usada foi `16,74 s`, 44,1 kHz, estéreo. Na execução anterior, sem o limite publicado ainda, Qwen usou `language='Portuguese'` mas produziu 655,28 s de áudio nas frases 1 e 2 (1.727,62 s e 1.720,46 s de geração); o usuário ouviu início fora de PT-BR e repetição. O runner usava então um `REF_TEXT` curto fixo, não confirmado contra a referência completa; isso pode ter afetado a clonagem, mas não prova a causa da falha. Após aplicar `max_new_tokens=128`, rejeitar WAVs >15 s e impor timeout de 180 s, o runaway desapareceu nas três frases. Qwen continuou em FP32/SDPA. Não declarar PT-BR garantido só pelo idioma genérico do parâmetro.
 
-A referência de 16,74 s foi usada com um `REF_TEXT` antigo, fixo e curto (`Não é por vocês serem velhos e acabados.`), que não estava confirmado como transcrição integral daquele WAV. Essa divergência é um fator de risco para a clonagem/Qwen, embora não prove sozinha a causa do idioma percebido. Não aceitar silenciosamente texto de referência divergente.
+**Medições do usuário, T4 (pares: duração do áudio / tempo de geração):**
 
-Correção publicada no branch do notebook: manter idioma explícito `Portuguese`, passar `max_new_tokens=128`, rejeitar sem salvar saídas maiores que 15 s e encerrar o processo Qwen após 180 s. A primeira versão publicada ainda pedia transcrição manual; a atualização atual adiciona Whisper-small local e fixado, mostra a hipótese antes do Qwen e permite corrigir com texto ou aceitar com Enter. A gravação permanece no runtime privado do Colab; o ASR existe somente como utilitário de avaliação e não é dependência da Lia. Nenhuma rodada com esses limites foi validada na T4 ainda; não declarar corrigido até conferir log e ouvir as três saídas.
+| Modelo | Carga | Frase 1 | Frase 2 | Frase 3 | RTF das frases |
+|---|---:|---:|---:|---:|---|
+| Chatterbox-Multilingual-pt-br | 17,49 s | 3,68 / 5,38 s | 5,44 / 5,12 s | 4,00 / 4,15 s | 1,462 / 0,942 / 1,037 |
+| Qwen3-TTS Base 0.6B, FP32 | 3,00 s | 2,80 / 9,96 s | 5,36 / 13,23 s | 3,76 / 9,60 s | 3,558 / 2,468 / 2,554 |
 
-**Métricas informadas pelo usuário (amostras-alvo, não voz final aprovada):** Chatterbox: (3,68 s, 5,52 s), (5,44 s, 5,16 s), (4,00 s, 4,00 s); Qwen: (655,28 s, 1.727,62 s), (655,28 s, 1.720,46 s), (3,76 s, 9,74 s), nos pares (duração de áudio, tempo de geração). Referência completa é transcrita localmente em português com `openai/whisper-small`, revisão `973afd24965f72e36ca33b3055d56a652f456b4d`; a transcrição precisa de revisão humana, sobretudo nomes e pontuação.
+**Avaliação auditiva do usuário:** ambos pronunciaram bem e preservaram a semelhança com a voz original. Chatterbox mantém leve timbre metálico/agudo; Qwen soa sem emoção. Baixa personalidade era esperada nesta prova neutra e não é evidência contra a identidade vocal. Chatterbox ficou perto de tempo real; Qwen ainda gerou 2,5–3,6 vezes mais devagar que a duração do áudio, medição sem streaming/TTFA.
+
+Whisper-small local levou 22,70 s e gerou hipótese de 244 caracteres, aceita com Enter. O trecho final reconhecido (“Volte em assim, traidora!”) parece linguística ou auditivamente suspeito; confirmar/corrigir antes de usar a transcrição em dados de adaptação. O WAV e JSON detalhado permanecem privados no runtime. Whisper emitiu aviso de attention mask, sem impedir a execução. A fonte atual passa `attention_mask` explicitamente; validar que o aviso desaparece na próxima transcrição.
+
+**Leitura de decisão:** os dois candidatos passam uma triagem inicial de pronúncia/semelhança vocal nesta referência; isso não aprova nenhum para produção nem resolve licença, fine-tuning, expressão ou execução na RX 580/Windows. Próximo teste TTS deve isolar expressividade/prosódia com texto controlado e parâmetros oficialmente suportados, separando emoção/persona de identidade de voz. Preservar os WAVs/relatórios no Colab privado e não adicionar ASR ao produto.
 
 ## Desenvolvimento do TTS próprio da Lia — direção confirmada
 

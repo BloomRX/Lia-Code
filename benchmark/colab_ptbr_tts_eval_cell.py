@@ -242,11 +242,12 @@ if not REF_TEXT.strip():
         model=WhisperForConditionalGeneration.from_pretrained(
             model_id,revision=revision,torch_dtype=torch.float16,
             use_safetensors=True).to('cuda:0')
-        inputs=processor(mono,sampling_rate=16000,return_tensors='pt')
+        inputs=processor(mono,sampling_rate=16000,return_tensors='pt',return_attention_mask=True)
         features=inputs.input_features.to(device='cuda:0',dtype=torch.float16)
+        attention_mask=inputs.attention_mask.to(device='cuda:0')
         forced=processor.get_decoder_prompt_ids(language='portuguese',task='transcribe')
         with torch.inference_mode():
-            ids=model.generate(features,forced_decoder_ids=forced,max_new_tokens=256,do_sample=False)
+            ids=model.generate(features,attention_mask=attention_mask,forced_decoder_ids=forced,max_new_tokens=256,do_sample=False)
         transcript=processor.batch_decode(ids,skip_special_tokens=True)[0].strip()
         if not transcript:
             raise RuntimeError('Whisper não encontrou fala reconhecível no WAV de referência.')

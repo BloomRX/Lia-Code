@@ -544,7 +544,26 @@ qwen_runner.write_text(textwrap.dedent(r'''
     expression_row={'model':'Qwen3-TTS-12Hz-0.6B-Base','label':'semantic_emotion_default_sampling','text':expression_text,'path':str(expression_path),'duration_s':expression_duration,'generation_s':expression_elapsed,'rtf':expression_elapsed/max(expression_duration,1e-9)}
     rows.append(expression_row)
     print(json.dumps(expression_row,ensure_ascii=False))
-    (root/'qwen3_tts_metrics.json').write_text(json.dumps({'model_repo':'Qwen/Qwen3-TTS-12Hz-0.6B-Base','model_revision':'5d83992436eae1d760afd27aff78a71d676296fc','package':'qwen-tts==0.1.1','dtype':'float32','language':language,'max_new_tokens':max_new_tokens,'max_audio_seconds':max_audio_seconds,'reference_audio_sha256':ref_sha256,'reference_audio_seconds':ref_info.duration,'reference_audio_sample_rate':ref_info.samplerate,'reference_transcript':ref_text,'load_seconds':load_s,'results':rows},ensure_ascii=False,indent=2),encoding='utf-8')
+    # Isola o vetor de speaker, sem tokens de prosódia/transcrição do ICL.
+    torch.manual_seed(1234)
+    t0=time.perf_counter()
+    xvector_wavs,xvector_sr=model.generate_voice_clone(
+        text=expression_text,language=language,ref_audio=str(ref_path),
+        x_vector_only_mode=True,max_new_tokens=max_new_tokens,
+    )
+    xvector_elapsed=time.perf_counter()-t0
+    xvector_arr=xvector_wavs[0]
+    xvector_duration=len(xvector_arr)/xvector_sr
+    if not np.isfinite(xvector_arr).all():
+        raise RuntimeError('Qwen x-vector: áudio contém valores não finitos; não será salvo/reproduzido.')
+    if xvector_duration > max_audio_seconds:
+        raise RuntimeError(f'Qwen x-vector: áudio de {xvector_duration:.2f}s excede {max_audio_seconds:.0f}s; não será salvo/reproduzido.')
+    xvector_path=root/'qwen3_tts_expression_xvector.wav'
+    sf.write(xvector_path,xvector_arr,xvector_sr)
+    xvector_row={'model':'Qwen3-TTS-12Hz-0.6B-Base','label':'x_vector_only_speaker_embedding','text':expression_text,'path':str(xvector_path),'duration_s':xvector_duration,'generation_s':xvector_elapsed,'rtf':xvector_elapsed/max(xvector_duration,1e-9)}
+    rows.append(xvector_row)
+    print(json.dumps(xvector_row,ensure_ascii=False))
+    (root/'qwen3_tts_metrics.json').write_text(json.dumps({'model_repo':'Qwen/Qwen3-TTS-12Hz-0.6B-Base','model_revision':'5d83992436eae1d760afd27aff78a71d676296fc','package':'qwen-tts==0.1.1','dtype':'float32','language':language,'max_new_tokens':max_new_tokens,'max_audio_seconds':max_audio_seconds,'x_vector_only_mode_sample':True,'reference_audio_sha256':ref_sha256,'reference_audio_seconds':ref_info.duration,'reference_audio_sample_rate':ref_info.samplerate,'reference_transcript':ref_text,'load_seconds':load_s,'results':rows},ensure_ascii=False,indent=2),encoding='utf-8')
 '''), encoding='utf-8')
 
 qwen_metrics_path=ROOT/'qwen3_tts_metrics.json'
@@ -552,8 +571,9 @@ reuse_qwen=False
 if qwen_metrics_path.is_file():
     try:
         previous_qwen=json.loads(qwen_metrics_path.read_text(encoding='utf-8'))
-        expected_texts=TEXTS+[EXPRESSION_TEST_TEXT]
+        expected_texts=TEXTS+[EXPRESSION_TEST_TEXT,EXPRESSION_TEST_TEXT]
         reuse_qwen=(previous_qwen.get('model_revision')==QWEN_REV
+            and previous_qwen.get('x_vector_only_mode_sample') is True
             and previous_qwen.get('reference_audio_sha256')==reference_sha256
             and previous_qwen.get('reference_transcript')==REF_TEXT
             and previous_qwen.get('language')==QWEN_LANGUAGE
@@ -582,12 +602,14 @@ for i, text in enumerate(TEXTS, 1):
         display(Audio(filename=str(ROOT / filename)))
 
 display(Markdown(f'### Expressividade (mesmo texto para todos): {EXPRESSION_TEST_TEXT}'))
+display(Markdown('**Avaliação pedida (não precisa enviar log nem rodar outra vez depois):** entre os Qwen, compare ICL e x-vector — qual soa mais natural/alegre e ainda mantém a voz? Nos quatro Chatterbox, qual reduz o metalizado sem perder expressão?'))
 for label, filename in [
     ('Chatterbox baseline (exaggeration 0.5 / CFG 0.5)', 'chatterbox_expression_baseline.wav'),
     ('Chatterbox exaggeration only (0.7 / 0.5)', 'chatterbox_expression_exaggeration_only.wav'),
     ('Chatterbox CFG only (0.5 / 0.3)', 'chatterbox_expression_cfg_only.wav'),
     ('Chatterbox combo expressivo (0.7 / 0.3)', 'chatterbox_expression_recommended_combo.wav'),
-    ('Qwen Base (amostragem padrão; sem controle instruct)', 'qwen3_tts_expression.wav'),
+    ('Qwen Base ICL (áudio + transcript; prosódia da referência)', 'qwen3_tts_expression.wav'),
+    ('Qwen Base x-vector (embedding speaker; sem prompt ICL)', 'qwen3_tts_expression_xvector.wav'),
 ]:
     print(label)
     display(Audio(filename=str(ROOT / filename)))

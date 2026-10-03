@@ -6,6 +6,14 @@ Criar a **Lia como assistente Omni local-first**: uma única experiência de usu
 
 Não tratar o benchmark de personalidade como objetivo principal da sessão. É uma fase subordinada e está pausada até o usuário reunir personagens de referência.
 
+## Ritmo de trabalho e continuidade (orientação do usuário — 2026-10-03)
+
+- O projeto está demorando demais; não repetir pesquisas/experimentos que já estão documentados. Antes de agir, consultar este arquivo e os docs do especialista relevante; pesquisar na web só lacunas factuais que mudem a decisão.
+- Manter um registro curto e cumulativo de decisão, evidência, revisão de código/recursos e próximo teste; preservar arquivos e métricas que permitam reproduzir resultados. Atualizar o doc pertinente depois de um resultado, não depender de memória conversacional efêmera.
+- Diagnosticar o que realmente foi executado: conferir SHA/commit/link do notebook e valores dos parâmetros contra o log. Não dizer que uma correção chegou ao usuário sem commit/push e não atribuir causa como fato sem evidência.
+- Automatizar preparação/telemetria quando for seguro. Para benchmarks privados, preferir processamento local e apresentar ao usuário apenas pontos que precisam de validação humana; não adicionar dependência ao produto sem decisão.
+- Não reabrir gates já decididos, nem solicitar confirmação repetida para ações que já estão no escopo/autorizadas. Solicitar decisão só para ambiguidade ou risco material.
+
 ## Plano principal confirmado pelo usuário — 2026-10-01
 
 **Primeiro desenvolver, adaptar e validar separadamente os modelos especialistas da Lia (LLM, TTS, visão, ASR/áudio e outros necessários); somente depois integrar os modelos aprovados no sistema Lia-Omni.** Não antecipar a integração Omni enquanto os modelos especialistas ainda não atingiram seus próprios critérios de qualidade/compatibilidade. O Qwen3-4B é apenas baseline textual, e o Piper Plus é apenas uma tentativa TTS que não atingiu a qualidade desejada; nenhum dos dois está aprovado como modelo final.
@@ -31,6 +39,8 @@ Motivo para começar modular: o alvo atual é uma RX 580 com 8 GB de VRAM. Como 
 ## Estado conhecido
 
 - Benchmarks históricos de quatro prompts não mostraram vantagem qualitativa decisiva do Qwen3-8B. A comparação mais recente usou cinco prompts e reforçou o Qwen3-4B como baseline por eficiência, sem declará-lo modelo final.
+- TTS Colab/T4: última execução compartilhada teve referência Lia de 16,74 s, 44,1 kHz, estéreo. Chatterbox PT-BR gerou três amostras em 4,00–5,52 s (RTF 0,948–1,500). Qwen gerou WAVs de 655,28 s para frases 1 e 2 após 1.727,62 s e 1.720,46 s; frase 3 foi 3,76 s/9,74 s. Usuário relata início fora de PT-BR e repetição. Código já configurava `language='Portuguese'`; a referência de 16,74 s estava associada a um `REF_TEXT` curto não confirmado como transcrição literal, possível fator de risco. Não tratar como prova de qualidade nem como espanhol confirmado.
+- Notebook atualizado na branch: `max_new_tokens=128`, guarda de áudio em 15 s, timeout de 180 s; ASR auxiliar `openai/whisper-small` roda localmente dentro do venv isolado do Colab, com pesos/revisão pinados e transcrição para revisão/correção pelo usuário. Não envia WAV a APIs, não entra no produto e não é dependência da Lia-Omni. Próximo passo é uma única nova execução com a mesma referência, confirmar/corrigir a transcrição exibida, verificar logs e ouvir as três saídas Qwen antes de nova alteração.
 - Na comparação cross-family de 2026-09-30, Qwen3-4B e 8B passaram código/JSON e não inventaram contexto. Ambos somaram 90 minutos na agenda com quatro itens numerados: 4B deu prioridade mais coerente (15/20/30/25); 8B também foi razoável (20/30/30/10). Não houve vantagem clara do 8B.
 - A rodada `20260930-082728` testou Qwen3-4B e Phi-4-mini; Qwen3-8B foi pulado porque Chrome estava aberto. Qwen3-4B passou agenda (15/20/30/25), Python, JSON e não invenção de contexto. Phi falhou agenda (30+25+40+45, sem unidade; total 140) e Python inválido; JSON e não-invenção passaram. Phi SWA estava desativado.
 - Phi-4-mini Q4_K_M foi baixado para `%LOCALAPPDATA%\Lia-Code\benchmark-cache\models\microsoft_Phi-4-mini-instruct-Q4_K_M.gguf`, SHA-256 verificado e registrado em `docs/RESOURCE-REGISTRY.md`.

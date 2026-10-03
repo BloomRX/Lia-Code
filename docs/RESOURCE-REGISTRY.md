@@ -13,6 +13,14 @@ Este registro lista pesos e runtimes guardados fora do Git para que possam ser e
 - **WAVs:** `audio\cpu\faber-cpu-short.wav`, `audio\cpu\faber-cpu-paragraph.wav`, `audio\directml\faber-directml-short.wav`, `audio\directml\faber-directml-paragraph.wav`. Revisão auditiva ainda pendente.
 - **Dependências transitivas:** listas completas e metadados de licença ficam em `cpu-package-inventory.json` e `directml-package-inventory.json` sob a raiz externa, incluindo dependências PyPI baixadas pelo resolver.
 
+## ASR local auxiliar do benchmark TTS — Whisper-small
+
+- **Uso/estado:** transcrever somente o WAV de referência da Lia para preencher `ref_text` na avaliação privada Qwen/Chatterbox. O usuário revisa/corrige a hipótese antes da síntese. Não integra ASR ao produto Lia.
+- **Modelo:** `openai/whisper-small`, revisão fixada `973afd24965f72e36ca33b3055d56a652f456b4d`, idioma/decodificação forçados para Portuguese/transcribe; licença Apache-2.0 conforme model card upstream.
+- **Runtime:** reaproveita Transformers, Librosa, Torch e Protobuf já presentes nos ambientes isolados do notebook; nenhum pacote ASR novo é instalado no kernel global. Pesos e cache em `/content/lia_tts_candidate_eval/hf_home` no runtime Colab.
+- **Privacidade:** áudio permanece no runtime Colab; só pesos públicos são baixados. O JSON de hipótese fica em `/content/lia_tts_candidate_eval/whisper_ref_transcription.json` (fora do Git) e poderá ser apagado ao limpar a pasta do experimento.
+- **Limpeza:** fechar a sessão e excluir somente `/content/lia_tts_candidate_eval` quando os resultados já não forem necessários; isso também remove modelos, venvs, transcrição e WAVs locais do experimento.
+
 ## Phi-4-mini-instruct Q4_K_M — baixado, hash verificado e registrado
 
 - **Uso:** comparação textual cross-family com o Qwen3-4B já em cache.

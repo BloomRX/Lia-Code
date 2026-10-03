@@ -17,8 +17,7 @@ import venv
 # ---------- Configuração que pode ser alterada sem editar o restante ----------
 ROOT = Path('/content/lia_tts_candidate_eval')
 REF_WAV = ROOT / 'lia_original.wav'
-# Será solicitado no notebook: transcreva literalmente TODO o áudio de referência.
-# O texto precisa corresponder à gravação carregada, não ao texto que será sintetizado.
+# A transcrição do WAV inteiro é gerada localmente e mostrada para revisão antes do Qwen.
 REF_TEXT = ''
 TEXTS = [
     'Não é por vocês serem velhos e acabados.',
@@ -39,6 +38,9 @@ QWEN_REV = '5d83992436eae1d760afd27aff78a71d676296fc'
 QWEN_LANGUAGE = 'Portuguese'  # idioma explicitamente passado à API; não usar detecção automática
 QWEN_MAX_NEW_TOKENS = 128
 QWEN_MAX_AUDIO_SECONDS = 15.0
+# ASR exclusivamente auxiliar à avaliação; whisper-small é Apache-2.0 e roda localmente.
+WHISPER_ID = 'openai/whisper-small'
+WHISPER_REV = '973afd24965f72e36ca33b3055d56a652f456b4d'
 
 ROOT.mkdir(parents=True, exist_ok=True)
 if shutil.disk_usage(ROOT).free < 15 * 1024**3:
@@ -111,11 +113,8 @@ if ref_seconds < 2.0:
     raise ValueError('Referência muito curta (<2 s). Escolha uma gravação limpa mais longa.')
 if ref_seconds < 5.0:
     print('AVISO: referência abaixo de 5 s; a clonagem pode ficar menos estável. Se puder, use 6–15 s de fala limpa da mesma voz.')
-if not REF_TEXT.strip():
-    REF_TEXT = input('Digite a transcrição literal de TODO o WAV de referência (não o texto-alvo): ').strip()
-if not REF_TEXT:
-    raise ValueError('A transcrição da referência é obrigatória para o Qwen; precisa corresponder ao WAV enviado.')
-print(f'Transcrição da referência recebida ({len(REF_TEXT)} caracteres); idioma do Qwen será Português.')
+# A transcrição é estimada localmente pelo Whisper no venv isolado e mostrada
+# para revisão antes do Qwen; nenhum áudio é enviado a uma API de ASR.
 
 # Os Spaces fixam Torch/Torchaudio 2.8.0; para a T4, use os wheels CUDA 12.8.
 # Não herde os binários Torch 2.11/CUDA 13 nem a torchvision global do Colab:
@@ -210,6 +209,65 @@ chat_py = make_env('chatterbox_ptbr', [
     'resemble-perth==1.0.1', 'silero-vad==5.1.2', 'conformer==0.3.2',
     'safetensors', 'huggingface_hub==0.30.2', 'protobuf>=6.31.1,<7',
 ])
+
+# Transcreve a referência no próprio Colab, em processo separado e com modelo pinado.
+# É apenas uma ajuda para o ref_text do benchmark: o usuário revisa/corrige antes do Qwen.
+if not REF_TEXT.strip():
+    whisper_runner = ROOT / 'run_local_whisper.py'
+    whisper_runner.write_text(textwrap.dedent(r'''
+        import hashlib, json, sys, time
+        from pathlib import Path
+        root=Path(sys.argv[1]); wav_path=Path(sys.argv[2]); out_path=Path(sys.argv[3])
+        model_id=sys.argv[4]; revision=sys.argv[5]
+        sys.path.insert(0, str(root / 'torch_runtime'))
+        import google
+        local_google=str(root / 'torch_runtime' / 'google')
+        google.__path__=[local_google, *[p for p in google.__path__ if str(p)!=local_google]]
+        for name in list(sys.modules):
+            if name=='google.protobuf' or name.startswith('google.protobuf.'):
+                del sys.modules[name]
+        import google.protobuf
+        assert tuple(map(int, google.protobuf.__version__.split('.')[:3])) >= (6,31,1)
+        import librosa, numpy as np, soundfile as sf, torch
+        import transformers.utils.import_utils as _hf_import_utils
+        _hf_import_utils._torchvision_available = False
+        from transformers import WhisperForConditionalGeneration, WhisperProcessor
+        audio,sr=sf.read(str(wav_path),dtype='float32',always_2d=True)
+        mono=audio.mean(axis=1)
+        if sr != 16000:
+            mono=librosa.resample(mono,orig_sr=sr,target_sr=16000)
+        t0=time.perf_counter()
+        processor=WhisperProcessor.from_pretrained(
+            model_id,revision=revision)
+        model=WhisperForConditionalGeneration.from_pretrained(
+            model_id,revision=revision,torch_dtype=torch.float16,
+            use_safetensors=True).to('cuda:0')
+        inputs=processor(mono,sampling_rate=16000,return_tensors='pt')
+        features=inputs.input_features.to(device='cuda:0',dtype=torch.float16)
+        forced=processor.get_decoder_prompt_ids(language='portuguese',task='transcribe')
+        with torch.inference_mode():
+            ids=model.generate(features,forced_decoder_ids=forced,max_new_tokens=256,do_sample=False)
+        transcript=processor.batch_decode(ids,skip_special_tokens=True)[0].strip()
+        if not transcript:
+            raise RuntimeError('Whisper não encontrou fala reconhecível no WAV de referência.')
+        result={'model':model_id,'revision':revision,
+                'language':'Portuguese','transcript':transcript,
+                'reference_audio_sha256':hashlib.sha256(wav_path.read_bytes()).hexdigest(),'audio_seconds':len(audio)/sr,
+                'inference_seconds':time.perf_counter()-t0}
+        out_path.write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')
+        print(json.dumps(result,ensure_ascii=False),flush=True)
+    '''),encoding='utf-8')
+    transcript_path=ROOT/'whisper_ref_transcription.json'
+    print('Transcrevendo o WAV localmente com Whisper-small; o áudio não é enviado a serviços externos.')
+    run_streamed([str(chat_py),'-X','faulthandler','-u',str(whisper_runner),str(ROOT),str(REF_WAV),str(transcript_path),WHISPER_ID,WHISPER_REV],'ASR local da referência',timeout_seconds=180)
+    whisper_result=json.loads(transcript_path.read_text(encoding='utf-8'))
+    print('Transcrição automática — confira pontuação, palavras e nomes próprios:')
+    print(whisper_result['transcript'])
+    correction=input('Enter para aceitar; ou cole a transcrição corrigida para usar no Qwen: ').strip()
+    REF_TEXT=correction or whisper_result['transcript']
+else:
+    print('Usando REF_TEXT fornecido na configuração; confirme que corresponde ao WAV inteiro.')
+print(f'Ref_text final: {len(REF_TEXT)} caracteres; Qwen language={QWEN_LANGUAGE}.')
 
 space_dir = ROOT / 'chatterbox_ptbr_space'
 if not space_dir.exists():
@@ -318,7 +376,7 @@ subprocess.run([sys.executable, '-m', 'pip', 'install', '--disable-pip-version-c
 
 qwen_runner = ROOT / 'run_qwen_pt.py'
 qwen_runner.write_text(textwrap.dedent(r'''
-    import json, sys, time
+    import hashlib, json, sys, time
     from pathlib import Path
     root=Path(sys.argv[1]); ref_path=Path(sys.argv[2]); ref_text=sys.argv[3]
     texts=json.loads(Path(sys.argv[4]).read_text(encoding='utf-8'))
@@ -342,6 +400,8 @@ qwen_runner.write_text(textwrap.dedent(r'''
     import transformers.utils.import_utils as _hf_import_utils
     _hf_import_utils._torchvision_available = False
     from qwen_tts import Qwen3TTSModel
+    ref_info=sf.info(str(ref_path))
+    ref_sha256=hashlib.sha256(ref_path.read_bytes()).hexdigest()
     model_dir=snapshot_download(
         repo_id='Qwen/Qwen3-TTS-12Hz-0.6B-Base',
         revision='5d83992436eae1d760afd27aff78a71d676296fc',
@@ -377,7 +437,7 @@ qwen_runner.write_text(textwrap.dedent(r'''
         row={'model':'Qwen3-TTS-12Hz-0.6B-Base','text':text,'path':str(path),'duration_s':duration,'generation_s':elapsed,'rtf':elapsed/max(duration,1e-9)}
         rows.append(row)
         print(json.dumps(row,ensure_ascii=False))
-    (root/'qwen3_tts_metrics.json').write_text(json.dumps({'model_repo':'Qwen/Qwen3-TTS-12Hz-0.6B-Base','model_revision':'5d83992436eae1d760afd27aff78a71d676296fc','package':'qwen-tts==0.1.1','dtype':'float32','language':language,'max_new_tokens':max_new_tokens,'max_audio_seconds':max_audio_seconds,'load_seconds':load_s,'results':rows},ensure_ascii=False,indent=2),encoding='utf-8')
+    (root/'qwen3_tts_metrics.json').write_text(json.dumps({'model_repo':'Qwen/Qwen3-TTS-12Hz-0.6B-Base','model_revision':'5d83992436eae1d760afd27aff78a71d676296fc','package':'qwen-tts==0.1.1','dtype':'float32','language':language,'max_new_tokens':max_new_tokens,'max_audio_seconds':max_audio_seconds,'reference_audio_sha256':ref_sha256,'reference_audio_seconds':ref_info.duration,'reference_audio_sample_rate':ref_info.samplerate,'reference_transcript':ref_text,'load_seconds':load_s,'results':rows},ensure_ascii=False,indent=2),encoding='utf-8')
 '''), encoding='utf-8')
 
 print('\nExecutando Qwen3-TTS Base 0.6B (ref_text deve corresponder literalmente ao WAV)...')

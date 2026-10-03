@@ -4,6 +4,7 @@
 # Modelos/pacotes ficam em /content/lia_tts_candidate_eval (fora do Git).
 
 from pathlib import Path
+import hashlib
 import json
 import os
 import shutil
@@ -211,61 +212,78 @@ chat_py = make_env('chatterbox_ptbr', [
 ])
 
 # Transcreve a referência no próprio Colab, em processo separado e com modelo pinado.
-# É apenas uma ajuda para o ref_text do benchmark: o usuário revisa/corrige antes do Qwen.
+# O resultado aprovado é reutilizado para o mesmo WAV/modelo, sem repetir ASR em cada rodada.
 if not REF_TEXT.strip():
-    whisper_runner = ROOT / 'run_local_whisper.py'
-    whisper_runner.write_text(textwrap.dedent(r'''
-        import hashlib, json, sys, time
-        from pathlib import Path
-        root=Path(sys.argv[1]); wav_path=Path(sys.argv[2]); out_path=Path(sys.argv[3])
-        model_id=sys.argv[4]; revision=sys.argv[5]
-        sys.path.insert(0, str(root / 'torch_runtime'))
-        import google
-        local_google=str(root / 'torch_runtime' / 'google')
-        google.__path__=[local_google, *[p for p in google.__path__ if str(p)!=local_google]]
-        for name in list(sys.modules):
-            if name=='google.protobuf' or name.startswith('google.protobuf.'):
-                del sys.modules[name]
-        import google.protobuf
-        assert tuple(map(int, google.protobuf.__version__.split('.')[:3])) >= (6,31,1)
-        import librosa, numpy as np, soundfile as sf, torch
-        import transformers.utils.import_utils as _hf_import_utils
-        _hf_import_utils._torchvision_available = False
-        from transformers import WhisperForConditionalGeneration, WhisperProcessor
-        audio,sr=sf.read(str(wav_path),dtype='float32',always_2d=True)
-        mono=audio.mean(axis=1)
-        if sr != 16000:
-            mono=librosa.resample(mono,orig_sr=sr,target_sr=16000)
-        t0=time.perf_counter()
-        processor=WhisperProcessor.from_pretrained(
-            model_id,revision=revision)
-        model=WhisperForConditionalGeneration.from_pretrained(
-            model_id,revision=revision,torch_dtype=torch.float16,
-            use_safetensors=True).to('cuda:0')
-        inputs=processor(mono,sampling_rate=16000,return_tensors='pt',return_attention_mask=True)
-        features=inputs.input_features.to(device='cuda:0',dtype=torch.float16)
-        attention_mask=inputs.attention_mask.to(device='cuda:0')
-        forced=processor.get_decoder_prompt_ids(language='portuguese',task='transcribe')
-        with torch.inference_mode():
-            ids=model.generate(features,attention_mask=attention_mask,forced_decoder_ids=forced,max_new_tokens=256,do_sample=False)
-        transcript=processor.batch_decode(ids,skip_special_tokens=True)[0].strip()
-        if not transcript:
-            raise RuntimeError('Whisper não encontrou fala reconhecível no WAV de referência.')
-        result={'model':model_id,'revision':revision,
-                'language':'Portuguese','transcript':transcript,
-                'reference_audio_sha256':hashlib.sha256(wav_path.read_bytes()).hexdigest(),'audio_seconds':len(audio)/sr,
-                'inference_seconds':time.perf_counter()-t0}
-        out_path.write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')
-        print(json.dumps(result,ensure_ascii=False),flush=True)
-    '''),encoding='utf-8')
     transcript_path=ROOT/'whisper_ref_transcription.json'
-    print('Transcrevendo o WAV localmente com Whisper-small; o áudio não é enviado a serviços externos.')
-    run_streamed([str(chat_py),'-X','faulthandler','-u',str(whisper_runner),str(ROOT),str(REF_WAV),str(transcript_path),WHISPER_ID,WHISPER_REV],'ASR local da referência',timeout_seconds=180)
-    whisper_result=json.loads(transcript_path.read_text(encoding='utf-8'))
-    print('Transcrição automática — confira pontuação, palavras e nomes próprios:')
-    print(whisper_result['transcript'])
-    correction=input('Enter para aceitar; ou cole a transcrição corrigida para usar no Qwen: ').strip()
-    REF_TEXT=correction or whisper_result['transcript']
+    reference_sha256=hashlib.sha256(REF_WAV.read_bytes()).hexdigest()
+    whisper_result=None
+    if transcript_path.exists():
+        try:
+            candidate=json.loads(transcript_path.read_text(encoding='utf-8'))
+            if (candidate.get('reference_audio_sha256')==reference_sha256
+                and candidate.get('model')==WHISPER_ID
+                and candidate.get('revision')==WHISPER_REV):
+                whisper_result=candidate
+        except (OSError, ValueError, json.JSONDecodeError):
+            whisper_result=None
+    if whisper_result is None:
+        whisper_runner = ROOT / 'run_local_whisper.py'
+        whisper_runner.write_text(textwrap.dedent(r'''
+            import hashlib, json, sys, time
+            from pathlib import Path
+            root=Path(sys.argv[1]); wav_path=Path(sys.argv[2]); out_path=Path(sys.argv[3])
+            model_id=sys.argv[4]; revision=sys.argv[5]
+            sys.path.insert(0, str(root / 'torch_runtime'))
+            import google
+            local_google=str(root / 'torch_runtime' / 'google')
+            google.__path__=[local_google, *[p for p in google.__path__ if str(p)!=local_google]]
+            for name in list(sys.modules):
+                if name=='google.protobuf' or name.startswith('google.protobuf.'):
+                    del sys.modules[name]
+            import google.protobuf
+            assert tuple(map(int, google.protobuf.__version__.split('.')[:3])) >= (6,31,1)
+            import librosa, numpy as np, soundfile as sf, torch
+            import transformers.utils.import_utils as _hf_import_utils
+            _hf_import_utils._torchvision_available = False
+            from transformers import WhisperForConditionalGeneration, WhisperProcessor
+            audio,sr=sf.read(str(wav_path),dtype='float32',always_2d=True)
+            mono=audio.mean(axis=1)
+            if sr != 16000:
+                mono=librosa.resample(mono,orig_sr=sr,target_sr=16000)
+            t0=time.perf_counter()
+            processor=WhisperProcessor.from_pretrained(model_id,revision=revision)
+            model=WhisperForConditionalGeneration.from_pretrained(
+                model_id,revision=revision,torch_dtype=torch.float16,use_safetensors=True).to('cuda:0')
+            inputs=processor(mono,sampling_rate=16000,return_tensors='pt',return_attention_mask=True)
+            features=inputs.input_features.to(device='cuda:0',dtype=torch.float16)
+            attention_mask=inputs.attention_mask.to(device='cuda:0')
+            forced=processor.get_decoder_prompt_ids(language='portuguese',task='transcribe')
+            with torch.inference_mode():
+                ids=model.generate(features,attention_mask=attention_mask,forced_decoder_ids=forced,max_new_tokens=256,do_sample=False)
+            transcript=processor.batch_decode(ids,skip_special_tokens=True)[0].strip()
+            if not transcript:
+                raise RuntimeError('Whisper não encontrou fala reconhecível no WAV de referência.')
+            result={'model':model_id,'revision':revision,'language':'Portuguese','transcript':transcript,
+                    'reference_audio_sha256':hashlib.sha256(wav_path.read_bytes()).hexdigest(),
+                    'audio_seconds':len(audio)/sr,'inference_seconds':time.perf_counter()-t0}
+            out_path.write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')
+            print(json.dumps(result,ensure_ascii=False),flush=True)
+        '''),encoding='utf-8')
+        print('Transcrevendo o WAV localmente com Whisper-small; o áudio não é enviado a serviços externos.')
+        run_streamed([str(chat_py),'-X','faulthandler','-u',str(whisper_runner),str(ROOT),str(REF_WAV),str(transcript_path),WHISPER_ID,WHISPER_REV],'ASR local da referência',timeout_seconds=180)
+        whisper_result=json.loads(transcript_path.read_text(encoding='utf-8'))
+    else:
+        print('Reutilizando a transcrição Whisper em cache: mesmo SHA-256 do WAV e mesma revisão do modelo.')
+    if whisper_result.get('approved_transcript'):
+        REF_TEXT=whisper_result['approved_transcript']
+        print('Usando a transcrição já revisada; ASR e confirmação manual foram dispensados.')
+    else:
+        print('Transcrição automática — confira pontuação, palavras e nomes próprios:')
+        print(whisper_result['transcript'])
+        correction=input('Enter para aceitar; ou cole a transcrição corrigida para usar no Qwen: ').strip()
+        REF_TEXT=correction or whisper_result['transcript']
+        whisper_result['approved_transcript']=REF_TEXT
+        transcript_path.write_text(json.dumps(whisper_result,ensure_ascii=False,indent=2),encoding='utf-8')
 else:
     print('Usando REF_TEXT fornecido na configuração; confirme que corresponde ao WAV inteiro.')
 print(f'Ref_text final: {len(REF_TEXT)} caracteres; Qwen language={QWEN_LANGUAGE}.')

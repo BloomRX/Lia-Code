@@ -25,6 +25,20 @@ Whisper-small local levou 22,70 s e gerou hipótese de 244 caracteres, aceita co
 
 **Leitura de decisão:** os dois candidatos passam uma triagem inicial de pronúncia/semelhança vocal nesta referência; isso não aprova nenhum para produção nem resolve licença, fine-tuning, expressão ou execução na RX 580/Windows. Preservar os WAVs/relatórios no Colab privado e não adicionar ASR ao produto.
 
+### A/B de expressividade — rodada mais recente na T4
+
+O usuário executou o A/B adicionado ao Colab usando a referência já cadastrada (16,74 s). A síntese concluiu sem runaway. Chatterbox carregou em 15,20 s; Qwen FP32 em 3,70 s. Métricas da frase afetiva, com seed 1234 e temperature 0,8 no Chatterbox:
+
+| Variante | Exaggeration | CFG | Duração | Geração | RTF |
+|---|---:|---:|---:|---:|---:|
+| Chatterbox baseline | 0,5 | 0,5 | 5,24 s | 6,05 s | 1,154 |
+| Exaggeration isolado | 0,7 | 0,5 | 4,72 s | 4,60 s | 0,976 |
+| CFG isolado | 0,5 | 0,3 | 5,80 s | 5,87 s | 1,012 |
+| Combo recomendado | 0,7 | 0,3 | 5,24 s | 5,12 s | 0,978 |
+| Qwen Base, amostragem padrão | — | — | 5,36 s | 13,36 s | 2,493 |
+
+O usuário ainda não informou qual versão soou mais expressiva/natural ou se a semelhança vocal se manteve nesse texto; métricas não substituem essa avaliação. Não alterar parâmetros nem declarar vencedor antes desse retorno.
+
 ### Próxima etapa — expressividade antes de persona
 
 - **Chatterbox Multilingual:** a API expõe `exaggeration`, `cfg_weight` e `temperature`. As dicas oficiais citam `.5/.5` como baseline e sugerem, para fala dramática, testar `exaggeration≈0.7+` com `cfg_weight≈0.3`; valores altos de exaggeration podem acelerar a fala. Isso é uma hipótese para A/B auditivo, não uma promessa de ganho no pack pt-BR. Uma issue comunitária relata efeito reduzido de exaggeration em variantes multilíngues; tratar com cautela. O notebook agora prepara um fatorial 2×2, com baseline, cada parâmetro isolado e o combo recomendado, mantendo texto, referência, temperature `.8` e seed `1234` fixos. [Código/dicas oficiais](https://github.com/resemble-ai/chatterbox), [relato sobre multilingual](https://github.com/resemble-ai/chatterbox/issues/355).

@@ -39,6 +39,8 @@ QWEN_REV = '5d83992436eae1d760afd27aff78a71d676296fc'
 QWEN_LANGUAGE = 'Portuguese'  # idioma explicitamente passado à API; não usar detecção automática
 QWEN_MAX_NEW_TOKENS = 128
 QWEN_MAX_AUDIO_SECONDS = 15.0
+# Frase afetivamente marcada para uma comparação de prosódia, não de persona.
+EXPRESSION_TEST_TEXT = 'Você conseguiu! Eu sabia que era capaz. Estou muito orgulhosa de você!'
 # ASR exclusivamente auxiliar à avaliação; whisper-small é Apache-2.0 e roda localmente.
 WHISPER_ID = 'openai/whisper-small'
 WHISPER_REV = '973afd24965f72e36ca33b3055d56a652f456b4d'
@@ -296,10 +298,11 @@ subprocess.run(['git', '-C', str(space_dir), 'checkout', '--force', SPACE_REV], 
 
 chat_runner = ROOT / 'run_chatterbox_ptbr.py'
 chat_runner.write_text(textwrap.dedent(r'''
-    import json, sys, time
+    import hashlib, json, sys, time
     from pathlib import Path
     root = Path(sys.argv[1]); space_dir = Path(sys.argv[2])
     ref_path = Path(sys.argv[3]); texts = json.loads(Path(sys.argv[4]).read_text(encoding='utf-8'))
+    ref_sha256=hashlib.sha256(ref_path.read_bytes()).hexdigest()
     # Prefer the locally installed, matched CUDA stack before Colab's global packages.
     sys.path.insert(0, str(root / 'torch_runtime'))
     import google
@@ -360,19 +363,21 @@ chat_runner.write_text(textwrap.dedent(r'''
         row = {'model':'Chatterbox-Multilingual-pt-br','text':text,'path':str(path),'duration_s':duration,'generation_s':elapsed,'rtf':elapsed/max(duration,1e-9)}
         rows.append(row)
         print(json.dumps(row, ensure_ascii=False))
-    (root / 'chatterbox_ptbr_metrics.json').write_text(json.dumps({'model_repo':'ResembleAI/Chatterbox-Multilingual-pt-br','model_revision':'b3952f18bc2eaa72b9bd7c17d2c4653bcad4770d','base_repo':'ResembleAI/chatterbox','base_revision':'5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18','space_revision':'9e515821e826e207cd617a0fdd0223899ed108ea','load_seconds':load_s,'results':rows},ensure_ascii=False,indent=2),encoding='utf-8')
+    (root / 'chatterbox_ptbr_metrics.json').write_text(json.dumps({'model_repo':'ResembleAI/Chatterbox-Multilingual-pt-br','model_revision':'b3952f18bc2eaa72b9bd7c17d2c4653bcad4770d','base_repo':'ResembleAI/chatterbox','base_revision':'5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18','space_revision':'9e515821e826e207cd617a0fdd0223899ed108ea','reference_audio_sha256':ref_sha256,'load_seconds':load_s,'results':rows},ensure_ascii=False,indent=2),encoding='utf-8')
 '''), encoding='utf-8')
 
 texts_json = ROOT / 'texts.json'
 texts_json.write_text(json.dumps(TEXTS, ensure_ascii=False), encoding='utf-8')
 print('\nExecutando Chatterbox PT-BR (referência permanece no Colab)...')
 chat_metrics_path = ROOT / 'chatterbox_ptbr_metrics.json'
+chat_reference_sha256=hashlib.sha256(REF_WAV.read_bytes()).hexdigest()
 reuse_chat = False
 if chat_metrics_path.is_file():
     try:
         previous = json.loads(chat_metrics_path.read_text(encoding='utf-8'))
         reuse_chat = (
             previous.get('space_revision') == SPACE_REV
+            and previous.get('reference_audio_sha256') == chat_reference_sha256
             and [row.get('text') for row in previous.get('results', [])] == TEXTS
             and all(Path(row.get('path', '')).is_file() for row in previous.get('results', []))
         )
@@ -383,6 +388,65 @@ if reuse_chat:
 else:
     run_streamed([str(chat_py), '-X', 'faulthandler', '-u', str(chat_runner), str(ROOT), str(space_dir), str(REF_WAV), str(texts_json)], 'Chatterbox PT-BR')
 
+# A/B controlado de prosódia Chatterbox: mesmo texto, referência, seed e temperature.
+# Só mudam exaggeration/cfg_weight; valores exploratórios baseados nas dicas upstream.
+expression_metrics_path=ROOT/'chatterbox_expression_metrics.json'
+reference_sha256=hashlib.sha256(REF_WAV.read_bytes()).hexdigest()
+reuse_expression=False
+if expression_metrics_path.is_file():
+    try:
+        m=json.loads(expression_metrics_path.read_text(encoding='utf-8'))
+        reuse_expression=(m.get('model_revision')==CHATTERBOX_PTBR_REV
+            and m.get('reference_audio_sha256')==reference_sha256
+            and m.get('text')==EXPRESSION_TEST_TEXT
+            and [(r.get('label'),r.get('exaggeration'),r.get('cfg_weight'),r.get('temperature'),r.get('seed')) for r in m.get('results',[])]==[('baseline',0.5,0.5,0.8,1234),('exaggeration_only',0.7,0.5,0.8,1234),('cfg_only',0.5,0.3,0.8,1234),('recommended_combo',0.7,0.3,0.8,1234)]
+            and all(Path(r.get('path','')).is_file() for r in m['results']))
+    except Exception:
+        reuse_expression=False
+if not reuse_expression:
+    expression_runner=ROOT/'run_chatterbox_expression.py'
+    expression_runner.write_text(textwrap.dedent(r'''
+        import hashlib, json, sys, time
+        from pathlib import Path
+        root=Path(sys.argv[1]); space_dir=Path(sys.argv[2]); ref_path=Path(sys.argv[3]); text=sys.argv[4]
+        sys.path.insert(0,str(root/'torch_runtime'))
+        import google
+        local_google=str(root/'torch_runtime'/'google')
+        google.__path__=[local_google,*[p for p in google.__path__ if str(p)!=local_google]]
+        for name in list(sys.modules):
+            if name=='google.protobuf' or name.startswith('google.protobuf.'):
+                del sys.modules[name]
+        import google.protobuf, numpy as np, soundfile as sf, torch
+        import transformers.utils.import_utils as _hf_import_utils
+        _hf_import_utils._torchvision_available=False
+        from huggingface_hub import snapshot_download
+        sys.path.insert(0,str(space_dir))
+        from chatterbox.src.chatterbox.tts import ChatterboxTTS
+        root_assets=root/'chatterbox_ptbr_assets'; root_assets.mkdir(parents=True,exist_ok=True)
+        base=Path(snapshot_download(repo_id='ResembleAI/chatterbox',revision='5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18',allow_patterns=['ve.pt','conds.pt']))
+        ptbr=Path(snapshot_download(repo_id='ResembleAI/Chatterbox-Multilingual-pt-br',revision='b3952f18bc2eaa72b9bd7c17d2c4653bcad4770d',allow_patterns=['t3_pt_br.safetensors','s3gen_v3.pt','grapheme_mtl_merged_expanded_v1.json']))
+        for name,folder in [('ve.pt',base),('conds.pt',base),('t3_pt_br.safetensors',ptbr),('s3gen_v3.pt',ptbr),('grapheme_mtl_merged_expanded_v1.json',ptbr)]:
+            target=root_assets/name
+            if not target.exists(): target.symlink_to(folder/name)
+        t0=time.perf_counter(); model=ChatterboxTTS.from_local(str(root_assets),device='cuda'); load_s=time.perf_counter()-t0
+        model.prepare_conditionals(str(ref_path),exaggeration=0.5)
+        configs=[('baseline',0.5,0.5),('exaggeration_only',0.7,0.5),('cfg_only',0.5,0.3),('recommended_combo',0.7,0.3)]
+        results=[]
+        for label,exaggeration,cfg_weight in configs:
+            torch.manual_seed(1234); t0=time.perf_counter()
+            wav=model.generate(text,language_id='pt',exaggeration=exaggeration,temperature=0.8,cfg_weight=cfg_weight)
+            elapsed=time.perf_counter()-t0
+            arr=wav.squeeze().detach().float().cpu().numpy() if torch.is_tensor(wav) else np.asarray(wav).squeeze()
+            duration=len(arr)/model.sr; path=root/f'chatterbox_expression_{label}.wav'; sf.write(path,arr,model.sr)
+            row={'label':label,'model':'Chatterbox-Multilingual-pt-br','text':text,'path':str(path),'exaggeration':exaggeration,'cfg_weight':cfg_weight,'temperature':0.8,'seed':1234,'duration_s':duration,'generation_s':elapsed,'rtf':elapsed/max(duration,1e-9)}
+            results.append(row); print(json.dumps(row,ensure_ascii=False),flush=True)
+        metadata={'model_revision':'b3952f18bc2eaa72b9bd7c17d2c4653bcad4770d','reference_audio_sha256':hashlib.sha256(ref_path.read_bytes()).hexdigest(),'load_seconds':load_s,'text':text,'results':results}
+        (root/'chatterbox_expression_metrics.json').write_text(json.dumps(metadata,ensure_ascii=False,indent=2),encoding='utf-8')
+    '''),encoding='utf-8')
+    run_streamed([str(chat_py),'-X','faulthandler','-u',str(expression_runner),str(ROOT),str(space_dir),str(REF_WAV),EXPRESSION_TEST_TEXT],'Chatterbox — A/B de expressividade',timeout_seconds=180)
+else:
+    print('Reutilizando o A/B de expressividade Chatterbox para o mesmo WAV/texto.')
+
 # ---------- Qwen3-TTS: fine-tunable Base 0.6B, português genérico ----------
 qwen_py = make_env('qwen3_tts', [
     '--no-deps', 'qwen-tts==0.1.1',
@@ -390,8 +454,13 @@ qwen_py = make_env('qwen3_tts', [
 qwen_site = next((p for p in (qwen_py.parent.parent / 'lib').glob('python*/site-packages')), None)
 if qwen_site is None:
     raise RuntimeError('Não encontrei site-packages no ambiente isolado Qwen.')
-subprocess.run([sys.executable, '-m', 'pip', 'install', '--disable-pip-version-check', '--no-warn-script-location',
-                '--upgrade', '--target', str(qwen_site), 'transformers==4.57.3', 'accelerate==1.12.0', 'librosa', 'soundfile', 'sox', 'onnxruntime', 'einops', 'huggingface_hub==0.36.2', 'protobuf>=6.31.1,<7'], check=True, env=CHILD_ENV)
+qwen_deps_marker=qwen_py.parent/'.lia_qwen_deps_ready_v1'
+if not qwen_deps_marker.exists():
+    subprocess.run([sys.executable, '-m', 'pip', 'install', '--disable-pip-version-check', '--no-warn-script-location',
+                    '--upgrade', '--target', str(qwen_site), 'transformers==4.57.3', 'accelerate==1.12.0', 'librosa', 'soundfile', 'sox', 'onnxruntime', 'einops', 'huggingface_hub==0.36.2', 'protobuf>=6.31.1,<7'], check=True, env=CHILD_ENV)
+    qwen_deps_marker.write_text('qwen runner dependencies installed in isolated venv\n',encoding='utf-8')
+else:
+    print('Reutilizando dependências Qwen isoladas já instaladas.')
 
 qwen_runner = ROOT / 'run_qwen_pt.py'
 qwen_runner.write_text(textwrap.dedent(r'''
@@ -400,6 +469,7 @@ qwen_runner.write_text(textwrap.dedent(r'''
     root=Path(sys.argv[1]); ref_path=Path(sys.argv[2]); ref_text=sys.argv[3]
     texts=json.loads(Path(sys.argv[4]).read_text(encoding='utf-8'))
     max_new_tokens=int(sys.argv[5]); max_audio_seconds=float(sys.argv[6]); language=sys.argv[7]
+    expression_text=sys.argv[8]
     # Use the same isolated Torch/CUDA stack as the Chatterbox run.
     sys.path.insert(0, str(root / 'torch_runtime'))
     import google
@@ -456,11 +526,48 @@ qwen_runner.write_text(textwrap.dedent(r'''
         row={'model':'Qwen3-TTS-12Hz-0.6B-Base','text':text,'path':str(path),'duration_s':duration,'generation_s':elapsed,'rtf':elapsed/max(duration,1e-9)}
         rows.append(row)
         print(json.dumps(row,ensure_ascii=False))
+    torch.manual_seed(1234)
+    t0=time.perf_counter()
+    expression_wavs,expression_sr=model.generate_voice_clone(
+        text=expression_text,language=language,ref_audio=str(ref_path),ref_text=ref_text,
+        max_new_tokens=max_new_tokens,
+    )
+    expression_elapsed=time.perf_counter()-t0
+    expression_arr=expression_wavs[0]
+    expression_duration=len(expression_arr)/expression_sr
+    if not np.isfinite(expression_arr).all():
+        raise RuntimeError('Qwen expressividade: áudio contém valores não finitos; não será salvo/reproduzido.')
+    if expression_duration > max_audio_seconds:
+        raise RuntimeError(f'Qwen expressividade: áudio de {expression_duration:.2f}s excede {max_audio_seconds:.0f}s; não será salvo/reproduzido.')
+    expression_path=root/'qwen3_tts_expression.wav'
+    sf.write(expression_path,expression_arr,expression_sr)
+    expression_row={'model':'Qwen3-TTS-12Hz-0.6B-Base','label':'semantic_emotion_default_sampling','text':expression_text,'path':str(expression_path),'duration_s':expression_duration,'generation_s':expression_elapsed,'rtf':expression_elapsed/max(expression_duration,1e-9)}
+    rows.append(expression_row)
+    print(json.dumps(expression_row,ensure_ascii=False))
     (root/'qwen3_tts_metrics.json').write_text(json.dumps({'model_repo':'Qwen/Qwen3-TTS-12Hz-0.6B-Base','model_revision':'5d83992436eae1d760afd27aff78a71d676296fc','package':'qwen-tts==0.1.1','dtype':'float32','language':language,'max_new_tokens':max_new_tokens,'max_audio_seconds':max_audio_seconds,'reference_audio_sha256':ref_sha256,'reference_audio_seconds':ref_info.duration,'reference_audio_sample_rate':ref_info.samplerate,'reference_transcript':ref_text,'load_seconds':load_s,'results':rows},ensure_ascii=False,indent=2),encoding='utf-8')
 '''), encoding='utf-8')
 
-print('\nExecutando Qwen3-TTS Base 0.6B (ref_text deve corresponder literalmente ao WAV)...')
-run_streamed([str(qwen_py), '-X', 'faulthandler', '-u', str(qwen_runner), str(ROOT), str(REF_WAV), REF_TEXT, str(texts_json), str(QWEN_MAX_NEW_TOKENS), str(QWEN_MAX_AUDIO_SECONDS), QWEN_LANGUAGE], 'Qwen3-TTS', timeout_seconds=180)
+qwen_metrics_path=ROOT/'qwen3_tts_metrics.json'
+reuse_qwen=False
+if qwen_metrics_path.is_file():
+    try:
+        previous_qwen=json.loads(qwen_metrics_path.read_text(encoding='utf-8'))
+        expected_texts=TEXTS+[EXPRESSION_TEST_TEXT]
+        reuse_qwen=(previous_qwen.get('model_revision')==QWEN_REV
+            and previous_qwen.get('reference_audio_sha256')==reference_sha256
+            and previous_qwen.get('reference_transcript')==REF_TEXT
+            and previous_qwen.get('language')==QWEN_LANGUAGE
+            and previous_qwen.get('max_new_tokens')==QWEN_MAX_NEW_TOKENS
+            and previous_qwen.get('max_audio_seconds')==QWEN_MAX_AUDIO_SECONDS
+            and [r.get('text') for r in previous_qwen.get('results',[])]==expected_texts
+            and all(Path(r.get('path','')).is_file() for r in previous_qwen.get('results',[])))
+    except Exception:
+        reuse_qwen=False
+if reuse_qwen:
+    print('Reutilizando Qwen: mesmo hash da referência, transcript, modelo e parâmetros.')
+else:
+    print('\nExecutando Qwen3-TTS Base 0.6B (ref_text deve corresponder literalmente ao WAV)...')
+    run_streamed([str(qwen_py), '-X', 'faulthandler', '-u', str(qwen_runner), str(ROOT), str(REF_WAV), REF_TEXT, str(texts_json), str(QWEN_MAX_NEW_TOKENS), str(QWEN_MAX_AUDIO_SECONDS), QWEN_LANGUAGE, EXPRESSION_TEST_TEXT], 'Qwen3-TTS', timeout_seconds=180)
 
 # Toca todas as amostras no notebook, intercaladas por frase para comparação cega.
 from IPython.display import Audio, display, Markdown
@@ -474,9 +581,24 @@ for i, text in enumerate(TEXTS, 1):
         print(label)
         display(Audio(filename=str(ROOT / filename)))
 
+display(Markdown(f'### Expressividade (mesmo texto para todos): {EXPRESSION_TEST_TEXT}'))
+for label, filename in [
+    ('Chatterbox baseline (exaggeration 0.5 / CFG 0.5)', 'chatterbox_expression_baseline.wav'),
+    ('Chatterbox exaggeration only (0.7 / 0.5)', 'chatterbox_expression_exaggeration_only.wav'),
+    ('Chatterbox CFG only (0.5 / 0.3)', 'chatterbox_expression_cfg_only.wav'),
+    ('Chatterbox combo expressivo (0.7 / 0.3)', 'chatterbox_expression_recommended_combo.wav'),
+    ('Qwen Base (amostragem padrão; sem controle instruct)', 'qwen3_tts_expression.wav'),
+]:
+    print(label)
+    display(Audio(filename=str(ROOT / filename)))
+
 print('Latência de síntese (não é streaming/TTFA) e RTF:')
 for fn in ['chatterbox_ptbr_metrics.json','qwen3_tts_metrics.json']:
     data=json.loads((ROOT/fn).read_text(encoding='utf-8'))
     print(fn, '| dtype=%s | carga=%.2fs' % (data.get('dtype', 'default'), data['load_seconds']))
     for r in data['results']:
         print(r['model'], '| geração=%.2fs | áudio=%.2fs | RTF=%.3f |' % (r['generation_s'],r['duration_s'],r['rtf']), r['text'])
+expr_data=json.loads((ROOT/'chatterbox_expression_metrics.json').read_text(encoding='utf-8'))
+print('A/B Chatterbox (exaggeration / CFG / RTF):')
+for r in expr_data['results']:
+    print(r['label'], '| %.1f / %.1f | RTF=%.3f | geração=%.2fs | áudio=%.2fs' % (r['exaggeration'],r['cfg_weight'],r['rtf'],r['generation_s'],r['duration_s']))
